@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 4.1)
 
+include(FetchContent)
+
 project(LibGui)
 
 add_library(LibGui)
@@ -8,6 +10,20 @@ set_target_properties(LibGui PROPERTIES
     CXX_STANDARD 20
     CXX_STANDARD_REQUIRED ON.
 )
+
+FetchContent_Declare(  glfw
+        GIT_REPOSITORY https://github.com/glfw/glfw.git
+        GIT_TAG        3.4
+)
+set(GLFW_BUILD_DOCS OFF CACHE BOOL  "")
+set(GLFW_INSTALL OFF CACHE BOOL  "")
+FetchContent_MakeAvailable(glfw)
+
+FetchContent_Declare(  freetype
+        GIT_REPOSITORY https://gitlab.freedesktop.org/freetype/freetype.git
+        GIT_TAG        VER-2-14-3
+)
+FetchContent_MakeAvailable(freetype)
 
 target_link_libraries(LibGui
   PRIVATE
