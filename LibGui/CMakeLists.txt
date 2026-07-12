@@ -52,5 +52,5 @@ target_sources(LibGui
     FILE_SET headers
     TYPE HEADERS
     FILES
-      src/LibGui.h
+        include/LibGui.h
 )

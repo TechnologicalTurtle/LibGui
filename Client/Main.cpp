@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 
-#include "../LibGui/src/LibGui.h"
+#include "../LibGui/include/LibGui.h"
 using namespace LibGui;
 
 int main()

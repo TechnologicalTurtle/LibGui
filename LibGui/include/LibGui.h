@@ -503,7 +503,7 @@ namespace LibGui
         GLFWwindow* parent_window;
     public:
         Vec2 position{ 0, 0 };
-        double scroll;
+        double scroll = 0;
         bool left_pressed = false;
         bool left_clicked = false;
         bool left_released = false;
