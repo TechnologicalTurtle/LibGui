@@ -1,9 +1,10 @@
+# setup this file
 cmake_minimum_required(VERSION 4.1)
-
 include(FetchContent)
 
 project(LibGui)
 
+# project build settings
 add_library(LibGui)
 
 set_target_properties(LibGui PROPERTIES
@@ -11,6 +12,7 @@ set_target_properties(LibGui PROPERTIES
     CXX_STANDARD_REQUIRED ON.
 )
 
+# fetch glfw and freetype from net
 FetchContent_Declare(  glfw
         GIT_REPOSITORY https://github.com/glfw/glfw.git
         GIT_TAG        3.4
@@ -25,6 +27,7 @@ FetchContent_Declare(  freetype
 )
 FetchContent_MakeAvailable(freetype)
 
+# source settings
 target_link_libraries(LibGui
   PRIVATE
     glfw

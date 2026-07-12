@@ -4,8 +4,6 @@ project(LibGui)
 
 option(LIBGUI_BUILD_CLIENT "LIBGUI_BUILD_CLIENT" OFF)
 
-#add_subdirectory(glfw)
-#add_subdirectory(freetype)
 add_subdirectory(LibGui)
 
 if (LIBGUI_BUILD_CLIENT)
