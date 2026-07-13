@@ -1,6 +1,6 @@
 # LibGui
 
-_WARNING: This project was created to learn OpenGL, Git, CMake, some advanced C++ and making bigger codebases, 
+_WARNING: This project was made to learn OpenGL, Git, CMake, some advanced C++ and making bigger codebases, 
 so it's not intended for real usage._
 
 ---

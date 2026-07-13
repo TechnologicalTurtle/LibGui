@@ -184,6 +184,7 @@ struct Color
 };
 
 struct GLFWwindow;
+
 namespace LibGui
 {
     extern bool DebugRender;
@@ -434,7 +435,7 @@ namespace LibGui
         // Add image 'img' to 'side' of this image, if 'img' is smaller tha this image, fill blank space with 'fill'
         void MergeImage(Direction_ side, Image& img, Color fill = Color::Transparent);
         // Add 'count' of  pixels with 'color' to 'side' of this image (just MergeImage wrapper)
-        void MergeCount(Direction_ side, int cout, Color color);
+        void MergeCount(Direction_ side, int count, Color color);
 
         // save as .png at 'path'
         bool SavePNG(const std::string& path);
@@ -497,6 +498,13 @@ namespace LibGui
     };
 
     // DO NOT CREATE YOUR OWN! USE window.cursor!
+    struct MouseButton
+    {
+        bool pressed, clicked, released = false;
+
+        // [internal]
+        void Update(int who_am_i, GLFWwindow* parent_window);
+    };
     class MouseCursor
     {
     private:
@@ -504,15 +512,16 @@ namespace LibGui
     public:
         Vec2 position{ 0, 0 };
         double scroll = 0;
-        bool left_pressed = false;
-        bool left_clicked = false;
-        bool left_released = false;
+
+        MouseButton left_button = {};
+        MouseButton middle_button = {};
+        MouseButton right_button = {};
 
         MouseCursor();
         MouseCursor(GLFWwindow* parent);
 
-        void SetLooks(CursorShape_ shape);
-        void SetLooks(Image shape, Vec2i pivot = {0, 0});
+        void SetLooks(const CursorShape_ shape) const;
+        void SetLooks(Image shape, const Vec2i pivot = {0, 0}) const;
 
         void Update();
     };
@@ -619,6 +628,7 @@ namespace LibGui
         bool CompareMouseToThis(Vec2 pos, Vec2 scale, float direction);
     public:
         RectangleInput(Window& window) :context(window) {}
+        virtual ~RectangleInput();
 
         virtual bool Rect_OnMouseEnter(Vec2 anchor = Vec2{ 0.5f, 0.5f });
         bool Rect_OnMouseClick(Vec2 anchor = Vec2{ 0.5f, 0.5f });
@@ -776,7 +786,7 @@ namespace LibGui
         void Update(bool render_afterwards = true);
         void Render();
 
-        bool Rect_OnMouseEnter(Vec2 anchor = {0, 0}) override;
+        bool Rect_OnMouseEnter(Vec2 anchor = {0.0f, 0.0f}) override;
     };
 
     class Graph: public RectangleInput

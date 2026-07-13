@@ -742,8 +742,23 @@ namespace LibGui
 	}
 
 	//------------------<MOUSE CURSOR>------------------
+	void MouseButton::Update(int who_am_i, GLFWwindow* parent_window)
+	{
+		if (clicked)
+			clicked = false;
+		if (released)
+			released = false;
+
+		if (glfwGetMouseButton(parent_window, who_am_i) == GLFW_PRESS && !pressed)
+			clicked = true;
+		if (glfwGetMouseButton(parent_window, who_am_i) == GLFW_RELEASE && pressed)
+			released = true;
+
+		pressed = glfwGetMouseButton(parent_window, who_am_i) == GLFW_PRESS;
+	}
+
 	MouseCursor::MouseCursor()
-		:parent_window((GLFWwindow*)0) {
+		:parent_window(static_cast<GLFWwindow*>(0)) {
 	}
 	MouseCursor::MouseCursor(GLFWwindow* parent)
 		:parent_window(parent) {
@@ -751,37 +766,28 @@ namespace LibGui
 
 	void MouseCursor::Update()
 	{
-		if (parent_window == (GLFWwindow*)0)
+		if (parent_window == static_cast<GLFWwindow*>(0))
 			Debug::Error("Trying to .Update() a non-initialized LibGui::MouseCursor");
 
 		double xPos, yPos = 0;
 		glfwGetCursorPos(parent_window, &xPos, &yPos);
 		position = Vec2{ xPos, yPos };
 
-		if (left_clicked)
-			left_clicked = false;
-		if (left_released)
-			left_released = false;
-
-		if (glfwGetMouseButton(parent_window, 0) == GLFW_PRESS && !left_pressed)
-			left_clicked = true;
-		if (glfwGetMouseButton(parent_window, 0) == GLFW_RELEASE && left_pressed)
-			left_released = true;
-
-		left_pressed = glfwGetMouseButton(parent_window, 0) == GLFW_PRESS;
+		left_button.Update(GLFW_MOUSE_BUTTON_LEFT, parent_window);
+		middle_button.Update(GLFW_MOUSE_BUTTON_MIDDLE, parent_window);
+		right_button.Update(GLFW_MOUSE_BUTTON_RIGHT, parent_window);
 	}
 
-	// TODO: make better (set default at frame start)
-	void MouseCursor::SetLooks(CursorShape_ shape)
+	void MouseCursor::SetLooks(const CursorShape_ shape) const
 	{
 		if (shape == CursorShape_Default)
 		{
-			glfwSetCursor(parent_window, NULL);
+			glfwSetCursor(parent_window, nullptr);
 		}
 		GLFWcursor* cursor = glfwCreateStandardCursor(shape);
 		glfwSetCursor(parent_window, cursor);
 	}
-	void MouseCursor::SetLooks(Image shape, Vec2i pivot)
+	void MouseCursor::SetLooks(Image shape, const Vec2i pivot) const
 	{
 		GLFWimage image;
 		image.width = shape.size.x; image.height = shape.size.y;
@@ -790,7 +796,7 @@ namespace LibGui
 		GLFWcursor* cursor = glfwCreateCursor(&image, pivot.x, pivot.y);
 		glfwSetCursor(parent_window, cursor);
 	}
-//skibidi
+
 	//------------------<KEY TRACKER>------------------
 	// UPPERCASE FUNCTION - glfwGetKey() takes letter names only as UPPERCASE
 	int UpperKey(int key)
@@ -1127,6 +1133,8 @@ namespace LibGui
 	}
 
 	//------------------<RECTANGLE INPUT FUNCTIONS>-------
+	RectangleInput::~RectangleInput(){}
+
 	bool RectangleInput::CompareMouseToThis(Vec2 pos, Vec2 scale, float direction)
 	{
 		// instead of rotating the block, i... rotate the mouse backwards
@@ -1147,17 +1155,18 @@ namespace LibGui
 		Debug::Warn("You're trying to use RectangleInput::Rect_OnMouseEnter; not possible -> just return false;");
 		return false;
 	}
+
 	bool RectangleInput::Rect_OnMouseClick(Vec2 anchor)
 	{
-		return Rect_OnMouseEnter(anchor) && context.cursor.left_clicked;
+		return Rect_OnMouseEnter(anchor) && context.cursor.left_button.clicked;
 	}
 	bool RectangleInput::Rect_OnMouseDrag(Vec2 anchor)
 	{
-		return Rect_OnMouseEnter(anchor) && context.cursor.left_pressed;
+		return Rect_OnMouseEnter(anchor) && context.cursor.left_button.pressed;
 	}
 	bool RectangleInput::Rect_OnMouseRelease(Vec2 anchor)
 	{
-		return Rect_OnMouseEnter(anchor) && context.cursor.left_released;
+		return Rect_OnMouseEnter(anchor) && context.cursor.left_button.released;
 	}
 
 	Window& RectangleInput::GetContext()
@@ -1630,7 +1639,7 @@ namespace LibGui
 			cursor_pos = std::max(0, render.GetTouchedCharIndex());
 		}
 		// on click outside of text => deactivate
-		if (!Rect_OnMouseEnter() && context.cursor.left_clicked)
+		if (!Rect_OnMouseEnter() && context.cursor.left_button.clicked)
 			active = false;
 
 		if (active)
