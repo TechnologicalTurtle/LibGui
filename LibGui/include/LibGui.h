@@ -561,6 +561,8 @@ namespace LibGui
         bool fullscreen = false;
         Vec2i fSize;
         Vec2i fPos;
+
+        bool FullscreenOnF11;
     public:
         unsigned int pressed_character = 0;
 
@@ -576,8 +578,6 @@ namespace LibGui
 
         // can Draw() function close window when user pressed close button?
         bool CanAutoClose = false;
-
-        bool FullscreenOnF11;
 
         // READ-ONLY window size
         Vec2i size;
