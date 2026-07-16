@@ -521,7 +521,7 @@ namespace LibGui
         MouseCursor(GLFWwindow* parent);
 
         void SetLooks(const CursorShape_ shape) const;
-        void SetLooks(Image shape, const Vec2i pivot = {0, 0}) const;
+        void SetLooks(Image shape, const Vec2i pivot) const;
 
         void Update();
     };
