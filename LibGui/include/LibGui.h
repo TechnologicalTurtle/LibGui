@@ -318,6 +318,15 @@ namespace LibGui
         CursorShape_NotAllowed                 = 0x0003600A
     };
 
+    enum UniformFlag
+    {
+        UniformFlag_XPos_Normalized   = 0b1,
+        UniformFlag_YPos_Normalized   = 0b10,
+        UniformFlag_XScale_Normalized = 0b100,
+        UniformFlag_YScale_Normalized = 0b1000,
+        UniformFlag_RenderAsLine      = 0b10000
+    };
+
     class TextFile
     {
     private:
@@ -638,14 +647,6 @@ namespace LibGui
         Window& GetContext();
     };
 
-    enum UniformFlag
-    {
-        UniformFlag_XPos_Normalized   = 0b1,
-        UniformFlag_YPos_Normalized   = 0b10,
-        UniformFlag_XScale_Normalized = 0b100,
-        UniformFlag_YScale_Normalized = 0b1000,
-        UniformFlag_RenderAsLine      = 0b10000
-    };
     class Object: public RectangleInput
     {
     private:
@@ -724,8 +725,8 @@ namespace LibGui
 
         float letterGap = 0.06f;
 
-        DynamicText(DT_TextureAtlas& font, Vec2i position = {0, 0}, Color text_color = Color::White, Color background_color = Color::Transparent);
-        DynamicText(Window& window, DT_TextureAtlas& font, Vec2i position = {0, 0}, Color text_color = Color::White, Color background_color = Color::Transparent);
+        DynamicText(DT_TextureAtlas& font, Vec2i position, Color text_color = Color::White, Color background_color = Color::Transparent);
+        DynamicText(Window& window, DT_TextureAtlas& font, Vec2i position, Color text_color = Color::White, Color background_color = Color::Transparent);
 
         int RenderChar(char character, Vec2 char_pos);
         void Render();
