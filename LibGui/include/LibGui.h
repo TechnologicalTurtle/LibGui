@@ -766,7 +766,6 @@ namespace LibGui
     public:
         bool active = false;
 
-        std::string allowedChars;
         std::string text;
         std::string(*preprocessText)(const std::string&) = nullptr;
 
