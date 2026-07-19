@@ -723,8 +723,6 @@ namespace LibGui
         Color textColor = Color::White;
         Color backColor = Color::Transparent;
 
-        float letterGap = 0.06f;
-
         DynamicText(DT_TextureAtlas& font, Vec2i position, Color text_color = Color::White, Color background_color = Color::Transparent);
         DynamicText(Window& window, DT_TextureAtlas& font, Vec2i position, Color text_color = Color::White, Color background_color = Color::Transparent);
 
