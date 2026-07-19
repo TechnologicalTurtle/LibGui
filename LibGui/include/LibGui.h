@@ -476,8 +476,8 @@ namespace LibGui
         void LoadImage(Image& source);
 
         Texture();
-        Texture(Image& source, bool smooth = true, unsigned int TextureSlot = 0);
-        Texture(const std::string& path, bool smooth = true, unsigned int TextureSlot = 0);
+        Texture(Image& source, bool smooth = true, unsigned int TextureSlot = 0, bool clamp = false);
+        Texture(const std::string& path, bool smooth = true, unsigned int TextureSlot = 0, bool clamp = false);
 
         void Bind();
         void Unbind();
@@ -486,23 +486,6 @@ namespace LibGui
 
     extern ::GLFWwindow* MainWindow;
     extern Shader DefaultShader;
-
-    class RoutineManager
-    {
-    public:
-        // all routines 
-        // the weird structure is for ability to modify times in a loop; 
-        // ...routines don't have to be modified in a loop
-        std::map<void(*)(), std::pair<float, float>> routines;
-
-        // add routine 'routine' that is called every 'delay' seconds (or as close as possible); runs in main thread
-        void Track(float delay, void(*routine)());
-        // removes all routines which ma to function 'routine'
-        void Stop(void(*routine)());
-
-        // must be called, runs all routines which are supposed to
-        void Update();
-    };
 
     // DO NOT CREATE YOUR OWN! USE window.cursor!
     struct MouseButton
@@ -724,7 +707,7 @@ namespace LibGui
         DynamicText(DT_TextureAtlas& font, Vec2i position, Color text_color = Color::White, Color background_color = Color::Transparent);
         DynamicText(Window& window, DT_TextureAtlas& font, Vec2i position, Color text_color = Color::White, Color background_color = Color::Transparent);
 
-        int RenderChar(char character, Vec2 char_pos);
+        float RenderChar(char character, Vec2 char_pos);
         void Render();
         // if 'text' changed -> update 'textFieldSize' value
         void UpdateTextFieldSize();
@@ -753,7 +736,7 @@ namespace LibGui
         DT_Character GetChar(char character);
         Vec2i GetCharSize(char character);
 
-        friend int DynamicText::RenderChar(char character, Vec2 char_pos);
+        friend float DynamicText::RenderChar(char character, Vec2 char_pos);
     };
 
     class TextInput: public RectangleInput
@@ -767,6 +750,7 @@ namespace LibGui
         std::string text;
         std::string(*preprocessText)(const std::string&) = nullptr;
 
+        float& fontSize = render.fontSize;
         Vec2& minSize = render.minSize;
         Vec2& maxSize = render.maxSize;
         Color& textColor = render.textColor;
@@ -777,6 +761,7 @@ namespace LibGui
 
         float textCursorTickRate = 0.5f;
 
+        TextInput(DT_TextureAtlas& font);
         TextInput(Window& window, DT_TextureAtlas& font);
 
         void Update(bool render_afterwards = true);
@@ -817,6 +802,7 @@ namespace LibGui
         float infoLineYDelta = 0;
 
         Graph(Vec2 pos, Vec2 desSize, std::vector<float>* data_source, DT_TextureAtlas& font);
+        Graph(Window& window, Vec2 pos, Vec2 desSize, std::vector<float>* data_source, DT_TextureAtlas& font);
 
         void Update();
 

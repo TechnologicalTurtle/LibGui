@@ -674,29 +674,41 @@ namespace LibGui
 	Texture::Texture()
 		:id(0) {
 	}
-	Texture::Texture(Image& source, bool smooth, unsigned int TextureSlot)
+	Texture::Texture(Image& source, bool smooth, unsigned int TextureSlot, bool clamp)
 		:texSlot(TextureSlot)
 	{
 		glGenTextures(1, &id);
 		glBindTexture(GL_TEXTURE_2D, id);
 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, clamp?GL_CLAMP_TO_BORDER:GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, clamp?GL_CLAMP_TO_BORDER:GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, smooth ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, smooth ? GL_LINEAR : GL_NEAREST);
+
+		if (clamp)
+		{
+			float borderColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+			glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+		}
 
 		LoadImage(source);
 	}
-	Texture::Texture(const std::string& path, bool smooth, unsigned int TextureSlot)
+	Texture::Texture(const std::string& path, bool smooth, unsigned int TextureSlot, bool clamp)
 		:texSlot(TextureSlot)
 	{
 		glGenTextures(1, &id);
 		glBindTexture(GL_TEXTURE_2D, id);
 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, clamp?GL_CLAMP_TO_BORDER:GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, clamp?GL_CLAMP_TO_BORDER:GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, smooth ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, smooth ? GL_LINEAR : GL_NEAREST);
+
+		if (clamp)
+		{
+			float borderColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+			glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+		}
 
 		LoadFile(path);
 	}
@@ -714,31 +726,6 @@ namespace LibGui
 	unsigned int Texture::GetID()
 	{
 		return id;
-	}
-
-	//------------------<ROUTINES>------------------
-	void RoutineManager::Track(float delay, void(*routine)())
-	{
-		routines.insert(std::pair<void(*)(), std::pair<float, float>>(
-			routine, // the function
-			std::pair<float, float>(GetLibTime(), delay) // lastCall | delay between calls
-		));
-	}
-	void RoutineManager::Stop(void(*routine)())
-	{
-		for (const auto& [val, key] : routines)
-			if (val == routine)
-				routines.erase(val);
-	}
-
-	void RoutineManager::Update()
-	{
-		for (auto& [val, time] : routines)
-			if (time.first + time.second < GetLibTime())
-			{
-				val();
-				time.first = GetLibTime();
-			}
 	}
 
 	//------------------<MOUSE CURSOR>------------------
@@ -1382,28 +1369,28 @@ namespace LibGui
 
 	void DynamicText::UpdateTextFieldSize()
 	{
-		Vec2i size{ 0, atlas->maxHeight }; int newX = 0;
+		Vec2i size{ 0.0f, atlas->maxHeight*fontSize }; float newX = 0;
 		for (char c : text)
 		{
 			if (c == ' ')
-				newX += 20;
+				newX += 20.0f*fontSize;
 			else if (c == '\n')
 			{
-				size.x = std::max(size.x, newX);
-				size.y += atlas->maxHeight;
+				size.x = std::max(static_cast<float>(size.x), newX);
+				size.y += atlas->maxHeight*fontSize;
 				newX = 0;
 			}
 			else
 			{
-				newX += atlas->GetChar(c).advance;
+				newX += atlas->GetChar(c).advance * fontSize;
 			}
 		}
-		size.x = std::max(size.x, newX);
-		textYOffset = atlas->maxHeight * fontSize;
-		textFieldSize = size * fontSize;
+		size.x = std::max(static_cast<float>(size.x), newX);
+		textYOffset = atlas->maxHeight * fontSize + backgroundAddSize.y*0.5f;
+		textFieldSize = size;
 	}
 
-	int DynamicText::RenderChar(char character, Vec2 char_pos)
+	float DynamicText::RenderChar(char character, Vec2 char_pos)
 	{
 		dtS.Bind();
 		Texture& texture = atlas->atlas[character].texture;
@@ -1415,8 +1402,8 @@ namespace LibGui
 		);
 		glUniform2f(
 			glGetUniformLocation(dtS.GetID(), "u_CharPos"),
-			GetCoord((char_pos.x+atlas->atlas[character].bearing.x)*fontSize, false, context.size.x),
-			GetCoord((char_pos.y-(texture.size.y-atlas->atlas[character].bearing.y))*fontSize, false, context.size.y)
+			GetCoord(char_pos.x+atlas->atlas[character].bearing.x*fontSize, false, context.size.x),
+			GetCoord(char_pos.y-(texture.size.y-atlas->atlas[character].bearing.y)*fontSize, false, context.size.y)
 		);
 
 		glUniform2f(
@@ -1455,12 +1442,13 @@ namespace LibGui
 		texture.Bind();
 		core.Render(true);
 
-		return atlas->atlas[character].advance;
+		return atlas->atlas[character].advance*fontSize;
 	}
 
 	void DynamicText::UpdateTFSandBackground()
 	{
 		UpdateTextFieldSize();
+
 		const Vec2 ns{ static_cast<Vec2>(textFieldSize) + backgroundAddSize };
 
 		if (minSize.x != -1 && ns.x < minSize.x)
@@ -1494,10 +1482,10 @@ namespace LibGui
 		for (char c : text)
 		{
 			if (c == ' ')
-				char_pos.x += 20;
+				char_pos.x += 20.0f*fontSize;
 			else if (c == '\n')
 			{
-				char_pos = Vec2i{ 0, char_pos.y - atlas->maxHeight };
+				char_pos = Vec2i{ 0.0f, char_pos.y - atlas->maxHeight*fontSize };
 			}
 			else
 				char_pos.x += RenderChar(c, char_pos);
@@ -1520,7 +1508,7 @@ namespace LibGui
 		UpdateTFSandBackground();
 		//if (!background.Rect_OnMouseEnter({0, 0})) return -1;
 		Vec2i char_pos{0, 0};
-		int desiredLine = -std::floor((pos.y - context.cursor.position.y) / atlas->maxHeight * fontSize) - 1;
+		int desiredLine = -std::floor((pos.y - context.cursor.position.y) / (atlas->maxHeight * fontSize)) - 1;
 		int i = 0;
 		for (;i < text.size() && desiredLine > 0; ++i)
 		{
@@ -1533,9 +1521,9 @@ namespace LibGui
 		{
 			char c = text[i];
 			if (c == ' ')
-				char_pos.x += 20;
+				char_pos.x += 20.0f*fontSize;
 			else
-				char_pos.x += atlas->GetChar(c).advance;
+				char_pos.x += atlas->GetChar(c).advance*fontSize;
 
 			float d = std::abs(pos.x + char_pos.x - atlas->GetCharSize(c).x / 2 - context.cursor.position.x);
 			if (d < best)
@@ -1556,11 +1544,11 @@ namespace LibGui
 			if (i == character_index && left_side) return char_pos + pos;
 			if (i-1 == character_index && !left_side) return char_pos + pos;
 			if (c == ' ')
-				char_pos.x += 20;
+				char_pos.x += 20.0f*fontSize;
 			else if (c == '\n')
-				char_pos = Vec2i{ 0, char_pos.y + atlas->maxHeight };
+				char_pos = Vec2i{ 0.0f, char_pos.y + atlas->maxHeight*fontSize };
 			else
-				char_pos.x += atlas->GetChar(c).advance;
+				char_pos.x += atlas->GetChar(c).advance*fontSize;
 		}
 
 		return char_pos + pos;
@@ -1593,7 +1581,7 @@ namespace LibGui
 			Image img(face->glyph->bitmap.buffer, { face->glyph->bitmap.width, face->glyph->bitmap.rows});
 			img.FlipXAxis();
 			atlas.insert(std::pair{ c,
-				DT_Character{Texture(img, !pixelated), {face->glyph->bitmap_left, face->glyph->bitmap_top}, static_cast<unsigned int>(face->glyph->advance.x)>>6}
+				DT_Character{Texture(img, !pixelated, 0, true), {face->glyph->bitmap_left, face->glyph->bitmap_top}, static_cast<unsigned int>(face->glyph->advance.x)>>6}
 			});
 			c = FT_Get_Next_Char(face, c, &index);
 		}
@@ -1612,10 +1600,13 @@ namespace LibGui
 	}
 
 	//------------------<TEXT INPUT>-------------------------
+	TextInput::TextInput(DT_TextureAtlas& font)
+		:TextInput(*DefaultWindow, font){
+	}
 	TextInput::TextInput(Window& window, DT_TextureAtlas& font)
-		:RectangleInput(window), textCursor(window), render(window, font)
+		:RectangleInput(window), textCursor(window), render(window, font, {0, 0})
 	{
-		backColor = Color::Blue;
+		backColor = Color{0.1f, 0.1f, 0.1f};
 
 		window.key_tracker.Track({ 
 			FunctionalKey_Enter,
@@ -1626,7 +1617,7 @@ namespace LibGui
 			FunctionalKey_Right,
 			FunctionalKey_Left
 			});
-		textCursor.InitAsRectangle({0, 0}, {5, 64}, Color::Red, {0, 0});
+		textCursor.InitAsRectangle({0, 0}, {5, font.maxHeight}, Color::Red, {0, 0});
 	}
 
 	void TextInput::Update(bool render_afterwards)
@@ -1707,7 +1698,8 @@ namespace LibGui
 		if (active && (int)std::floor(GetLibTime() / textCursorTickRate) % 2 == 0 &&
 			cursor_pos >= 0 && cursor_pos <= text.size())
 		{
-			textCursor.pos = render.GetPositionOnIndex(cursor_pos, true) + Vec2{ -render.atlas->maxHeight/10, 10 };
+			textCursor.pos = render.GetPositionOnIndex(cursor_pos, true) + Vec2{ -(render.atlas->maxHeight*fontSize)/10.0f, 10.0f };
+			textCursor.scale = Vec2{5, render.atlas->maxHeight} * fontSize;
 			if (textCursor.pos.x <= (render.pos.x + render.GetFinalSize().x))
 				textCursor.Render();
 		}
@@ -1720,7 +1712,22 @@ namespace LibGui
 
 	//------------------<GRAPH>------------------------------
 	Graph::Graph(Vec2 pos, Vec2 desSize, std::vector<float>* data_source, DT_TextureAtlas& font)
-		:RectangleInput(*DefaultWindow), position(pos), desired_size(desSize), data_source(data_source), text(font)
+		:RectangleInput(*DefaultWindow), position(pos), desired_size(desSize), data_source(data_source), text(font, {0, 0})
+	{
+		lines.UniformFlags |= UniformFlag_RenderAsLine;
+
+		info_line.UniformFlags |= UniformFlag_RenderAsLine;
+		info_line.InitAsCustom({{{0, 0}, infoLineColor}, {{-1, 0}, infoLineColor} }, {0, 1});
+
+		text.fontSize = 0.2f;
+		text.backgroundAddSize = { 0, 0 };
+
+		background.InitAsRectangle({ 0, 0 }, { 0, 0 }, backgroundColor, { 0, 1 });
+
+		Update();
+	}
+	Graph::Graph(Window& window, Vec2 pos, Vec2 desSize, std::vector<float>* data_source, DT_TextureAtlas& font)
+		:RectangleInput(window), position(pos), desired_size(desSize), data_source(data_source), text(window, font, {0, 0}), lines(window), background(window), info_line(window)
 	{
 		lines.UniformFlags |= UniformFlag_RenderAsLine;
 
