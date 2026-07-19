@@ -301,8 +301,6 @@ namespace LibGui
         FunctionalKey_Right_Super        = 347,
         FunctionalKey_Menu               = 348
     };
-    // list of all printable characters so you can easily use KeyTracker.Track(AllPrintableChars)
-    extern const char AllPrintableChars[];
     enum CursorShape_
     {
         CursorShape_Default                    = 0x00000000,
