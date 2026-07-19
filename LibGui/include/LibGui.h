@@ -196,7 +196,10 @@ namespace LibGui
     enum DefShaderType_
     {
         DefShaderType_defVertex   = 0,
-        DefShaderType_defFragment = 1
+        DefShaderType_defFragment = 1,
+
+        DefShaderType_dtVertex    = 2,
+        DefShaderType_dtFragment  = 3
     };
     enum WindowInitFlag_
     {
@@ -767,7 +770,7 @@ namespace LibGui
         void Update(bool render_afterwards = true);
         void Render();
 
-        bool Rect_OnMouseEnter(Vec2 anchor = {0.0f, 0.0f}) override;
+        bool Rect_OnMouseEnter(Vec2 anchor = Vec2{ 0.5f, 0.5f }) override;
     };
 
     class Graph: public RectangleInput

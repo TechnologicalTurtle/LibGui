@@ -172,8 +172,6 @@ namespace LibGui
 	double DeltaTime = 0;
 	double Framerate = 0;
 
-	const char AllPrintableChars[] = " ',-./0123456789;=ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]`";
-
 	//------------------<GLOBAL VARIABLES>------------------
 	GLFWwindow* MainWindow;
 	Window* DefaultWindow;
@@ -1888,7 +1886,12 @@ namespace LibGui
 			return std::string(src_defVertex);
 		case DefShaderType_defFragment:
 			return std::string(src_defFragment);
+		case DefShaderType_dtVertex:
+			return std::string(src_DT_Vertex);
+		case DefShaderType_dtFragment:
+			return std::string(src_DT_Fragment);
 		}
+		Debug::Error("Invalid GetDefShaderCode() 'which' parameter.");
 		return "";
 	}
 
@@ -1900,7 +1903,6 @@ namespace LibGui
 			obj.color = hoverColor;
 			return obj.Rect_OnMouseClick(anchor);
 		}
-		if (ChangeMouseShape) obj.GetContext().cursor.SetLooks(CursorShape_Default);
 		obj.color = defaultColor;
 		return false;
 	}
@@ -1912,7 +1914,6 @@ namespace LibGui
 			obj.backColor = hoverColor;
 			return obj.Rect_OnMouseClick();
 		}
-		if (ChangeMouseShape) obj.GetContext().cursor.SetLooks(CursorShape_Default);
 		obj.backColor = defaultColor;
 		return false;
 	}
@@ -1924,7 +1925,6 @@ namespace LibGui
 			obj.backgroundColor = hoverColor;
 			return obj.Rect_OnMouseClick();
 		}
-		if (ChangeMouseShape) obj.GetContext().cursor.SetLooks(CursorShape_Default);
 		obj.backgroundColor = defaultColor;
 		return false;
 	}
