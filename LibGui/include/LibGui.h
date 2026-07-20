@@ -812,7 +812,7 @@ namespace LibGui
 
         bool anyText = true;
         float fontSize = 0.2f;
-        int textLeftOffset = 5;
+        int textLeftOffset = 20;
         float infoLineYDelta = 5;
 
         Graph(Vec2 pos, Vec2 desSize, std::vector<float>* data_source, DT_TextureAtlas& font);

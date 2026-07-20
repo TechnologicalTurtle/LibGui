@@ -1753,9 +1753,7 @@ namespace LibGui {
 		:RectangleInput(*DefaultWindow),
 		lines({0, 0}, {0, 0}, Color::White, {}, UniformFlag_RenderAsLine),
 		background({0, 0}, {0, 0}, {0.1f, 0.1f, 0.1f}, Shapes::Rectangle({0, 1})),
-		info_line({0, 0}, {1, 1}, Color::White,
-		{{{{0, 0}, infoLineColor}, {{-1, 0}, infoLineColor} }, {0, 1}},
-	UniformFlag_RenderAsLine),
+		info_line({0, 0}, {1, 1}, { 1.0f, 1.0f, 1.0f, 0.5f }, Shapes::LineStrip({{0, 0}, {1, 0}}), UniformFlag_RenderAsLine),
 		text(font, {0, 0}),
 		data_source(data_source),
 		position(pos),
@@ -1769,16 +1767,14 @@ namespace LibGui {
 		Update();
 	}
 	Graph::Graph(Window& window, Vec2 pos, Vec2 desSize, std::vector<float>* data_source, DT_TextureAtlas& font)
-	:RectangleInput(window),
-	lines({0, 0}, {0, 0}, Color::White, {}, window, UniformFlag_RenderAsLine),
-	background({0, 0}, {0, 0}, {0.1f, 0.1f, 0.1f}, Shapes::Rectangle({0, 1}), window),
-	info_line({0, 0}, {1, 1}, Color::White,
-		{{{{0, 0}, infoLineColor}, {{-1, 0}, infoLineColor} }, {0, 1}},
-		window, UniformFlag_RenderAsLine),
-	text(window, font, {0, 0}),
-	data_source(data_source),
-	position(pos),
-	desired_size(desSize)
+		:RectangleInput(window),
+		lines({0, 0}, {0, 0}, Color::White, {}, window, UniformFlag_RenderAsLine),
+		background({0, 0}, {0, 0}, {0.1f, 0.1f, 0.1f}, Shapes::Rectangle({0, 1}), window),
+		info_line({0, 0}, {1, 1}, { 1.0f, 1.0f, 1.0f, 0.5f }, Shapes::LineStrip({{0, 0}, {1, 0}}), UniformFlag_RenderAsLine),
+		text(window, font, {0, 0}),
+		data_source(data_source),
+		position(pos),
+		desired_size(desSize)
 	{
 		text.fontSize = 0.2f;
 		text.backgroundAddSize = { 0, 0 };
@@ -1810,15 +1806,14 @@ namespace LibGui {
 		text.text = std::to_string(static_cast<int>(biggest)); text.UpdateTextFieldSize();
 		const int xOffset = anyText?text.textFieldSize.x:0;
 
-		finalSize = 
-			(
-				desired_size + 
-				Vec2{ 
-					static_cast<float>(xOffset),
-					text.atlas->maxHeight * fontSize * anyText
-				} + 
-				background_padding
-			) * scale;
+		finalSize = (
+			desired_size +
+			Vec2{
+				static_cast<float>(text.textFieldSize.x)  + textLeftOffset,
+				text.atlas->maxHeight * fontSize
+			}*anyText +
+			background_padding
+		)*scale;
 
 		background.scale = finalSize;
 		background.pos = position + background_padding * (anyText ? Vec2{ -0.5f, 0.5f } : Vec2{ 0.0f, 0.5f }) * scale + finalSize * Vec2{-anchor.x, anchor.y};
@@ -1832,11 +1827,11 @@ namespace LibGui {
 		text.textColor = textColor;
 
 		info_line.color = infoLineColor;
+		info_line.scale = Vec2{ desired_size.x*scale, 1.0f };
 
 		background.Render();
 		if (infoLineYDelta != 0)
 		{
-			info_line.scale = Vec2{ desired_size.x*scale, 1.0f };
 			for (float y = 0; y <= biggest; y += infoLineYDelta)
 			{
 				info_line.pos = Vec2{ position.x + xOffset + textLeftOffset * scale, position.y - y * PixPerUnit * scale } + finalSize * Vec2{ -anchor.x, anchor.y };
@@ -1845,7 +1840,7 @@ namespace LibGui {
 				{
 					text.text = std::to_string(static_cast<int>(y));
 					text.UpdateTextFieldSize();
-					text.pos = Vec2{ position.x + xOffset - (text.textFieldSize.x / 2) * scale, position.y - (y * PixPerUnit) * scale } + finalSize * Vec2{ -anchor.x, anchor.y };
+					text.pos = Vec2{ position.x + xOffset - (text.textFieldSize.x / 2) * scale, position.y - (y * PixPerUnit) * scale } + finalSize * Vec2{ -anchor.x, anchor.y } - Vec2{0, text.textFieldSize.y};
 					text.Render();
 				}
 			}
