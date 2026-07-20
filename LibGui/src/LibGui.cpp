@@ -878,6 +878,52 @@ namespace LibGui {
 	}
 
 	//------------------<WINDOW>------------------
+	static std::map<GLenum, std::string> gl_error_source_table =
+	{
+		{GL_DEBUG_SOURCE_API,             "API"},
+		{GL_DEBUG_SOURCE_WINDOW_SYSTEM,   "Window System"},
+		{GL_DEBUG_SOURCE_SHADER_COMPILER, "Shader Compiler"},
+		{GL_DEBUG_SOURCE_THIRD_PARTY,     "Third Party"},
+		{GL_DEBUG_SOURCE_APPLICATION,     "Application"},
+		{GL_DEBUG_SOURCE_OTHER,           "Other"}
+	};
+	static std::map<GLenum, std::string> gl_error_type_table =
+	{
+		{GL_DEBUG_TYPE_ERROR,               "error"},
+		{GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR, "deprecated behaviour"},
+		{GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR,  "undefined behaviour"},
+		{GL_DEBUG_TYPE_PORTABILITY,         "portability"},
+		{GL_DEBUG_TYPE_PERFORMANCE,         "performance"},
+		{GL_DEBUG_TYPE_MARKER,              "marker"},
+		{GL_DEBUG_TYPE_PUSH_GROUP,          "push group"},
+		{GL_DEBUG_TYPE_POP_GROUP,           "pop group"},
+		{GL_DEBUG_TYPE_OTHER,               "other"},
+	};
+	static std::map<GLenum, std::string> gl_error_severity_table =
+	{
+		{GL_DEBUG_SEVERITY_HIGH,         "HIGH"},
+		{GL_DEBUG_SEVERITY_MEDIUM,       "MEDIUM"},
+		{GL_DEBUG_SEVERITY_LOW,          "LOW"},
+		{GL_DEBUG_SEVERITY_NOTIFICATION, "Notification"}
+	};
+	static void APIENTRY glDebugOutput(GLenum source,
+                            GLenum type,
+                            unsigned int id,
+                            GLenum severity,
+                            GLsizei length,
+                            const char *message,
+                            const void *userParam)
+	{
+	    // ignore non-significant error/warning codes
+	    if(id == 131169 || id == 131185 || id == 131218 || id == 131204) return;
+
+		const std::string out =	"(" + std::to_string(id) + ") OpenGL " + gl_error_type_table[type] + " from " + gl_error_source_table[source] + " with " + gl_error_severity_table[severity] + " severity:\n" +
+								std::string(message);
+
+		Debug::Error(out);
+	}
+	static bool gl_debug_build = false;
+
 	static std::map<GLFWwindow*, Window*> window_pointer_map;
 	static void PressedCharCallback(GLFWwindow* window, const unsigned int character)
 	{
@@ -893,6 +939,7 @@ namespace LibGui {
 		if ((InitFlags & 2) >> 1)
 			glfwWindowHint(GLFW_RESIZABLE, false);
 
+		if (gl_debug_build) glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
 		window = glfwCreateWindow(scale.x, scale.y, name.c_str(), nullptr, MainWindow);
 		glfwSetCharCallback(window, PressedCharCallback);
 		window_pointer_map.insert({window, this});
@@ -1856,20 +1903,21 @@ namespace LibGui {
 		return CompareMouseToThis(r_pos, finalSize, 90); // can be problem
 	}
 
-
-
 	//------------------<LIBRARY FUNCTIONS>------------------
-	GLFWwindow* Init()
+	GLFWwindow* Init(bool debug_build)
 	{
+		gl_debug_build = debug_build;
+
 		// Initialize glfw
 		if (!glfwInit())
 			Debug::FatalError("GLFW failed to initialize!");
 
 		// Create window, and context with it
+		if (gl_debug_build) glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
 		MainWindow = glfwCreateWindow(100, 100, "MAIN", nullptr, nullptr);
 		if (!MainWindow)
 		{
-			Debug::FatalError("Failed to create window!");
+			Debug::FatalError("Failed to create initialization window!");
 			glfwTerminate();
 			return nullptr;
 		}
@@ -1881,6 +1929,18 @@ namespace LibGui {
 		{
 			Debug::FatalError("Failed to initialize GLAD");
 			return nullptr;
+		}
+
+		if (debug_build)
+		{
+			int flags; glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
+			if (flags & GL_CONTEXT_FLAG_DEBUG_BIT)
+			{
+				glEnable(GL_DEBUG_OUTPUT);
+				glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS); // makes sure errors are displayed synchronously
+				glDebugMessageCallback(glDebugOutput, nullptr);
+				glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+			}
 		}
 
 		// Set up OpenGL
@@ -1982,6 +2042,7 @@ namespace LibGui {
 	{
 		bool LogRepeated = false;
 		bool ErrorCrash = false;
+		// TOODO: log filtering
 
 		static std::string lastLog = "";
 		void Happy(const std::string& message)

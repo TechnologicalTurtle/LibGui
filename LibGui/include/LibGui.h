@@ -827,8 +827,10 @@ namespace LibGui
     };
 
     /* Initialization of the library, use at start as following
-    * LibGui::Window myMainWindow(LibGui::Init(), "name of my cool window", { width, height }); */
-    GLFWwindow* Init();
+    * LibGui::Window myMainWindow(LibGui::Init(), "name of my cool window", { width, height });
+    * debug_build = true will add debug context, which slows down program, but can debug opengl
+     */
+    GLFWwindow* Init(bool debug_build = false);
     // Handles non-critical stuff (for example Frame rate), is called from MainWindow .Draw() function, but if you want to freeze main window, you have to call this manually.
     void ManualUpdate();
     void Terminate();
