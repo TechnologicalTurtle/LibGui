@@ -19,7 +19,7 @@
 
 // just random math function
 constexpr float PI = 3.1415927f;
-float radians(float degrees)
+static float radians(float degrees)
 {
 	return degrees * (PI / 180);
 }
@@ -35,10 +35,10 @@ std::ostream& operator<<(std::ostream& os, const Vec2i& v)
 	return os;
 }
 
-Vec2 LG_EdgeMin{-1, -1};
-Vec2 LG_EdgeMax{-1, -1};
+static Vec2 LG_EdgeMin{-1, -1};
+static Vec2 LG_EdgeMax{-1, -1};
 
-LibGui::Shader dtS;
+static LibGui::Shader dtS;
 // Shaders source code
 // DEFAULT shaders
 constexpr std::string_view src_defVertex =
@@ -165,8 +165,7 @@ const Color Color::Purple(0.78f, 0.0f, 1.0f);
 const Color Color::Yellow(1.0f, 1.0f, 0.0f);
 const Color Color::Brown(0.23f, 0.1f, 0.0f);
 
-namespace LibGui
-{
+namespace LibGui {
 	bool DebugRender = false;
 
 	double DeltaTime = 0;
@@ -178,7 +177,7 @@ namespace LibGui
 	Shader DefaultShader;
 
 	// Function definitions
-	void SetEdges(Shader& shader, Vec2 min, Vec2 max)
+	static void SetEdges(const Shader& shader, const Vec2 min, const Vec2 max)
 	{
 		int xs, ys;
 		glfwGetWindowSize(glfwGetCurrentContext(), &xs, &ys);
@@ -197,7 +196,7 @@ namespace LibGui
 		file.close();
 	}
 
-	void TextFile::Write(std::string& data)
+	void TextFile::Write(const std::string& data)
 	{
 		file << data;
 	}
@@ -228,7 +227,7 @@ namespace LibGui
 		compilationSuccessful = success;
 		return !success;
 	}
-	void Shader::Compile(const std::string vertexSrc, const std::string fragmentSrc)
+	void Shader::Compile(const std::string& vertexSrc, const std::string& fragmentSrc)
 	{
 		compilationErrors.clear();
 		compilationSuccessful = true;
@@ -273,7 +272,7 @@ namespace LibGui
 		glDeleteShader(vertexShader);
 		glDeleteShader(fragmentShader);
 	}
-	void Shader::CompileFromFile(const std::string vertexPath, const std::string fragmentPath)
+	void Shader::CompileFromFile(const std::string& vertexPath, const std::string& fragmentPath)
 	{
 		Compile(TextFile(vertexPath).Get(), TextFile(fragmentPath).Get());
 	}
@@ -281,7 +280,7 @@ namespace LibGui
 	Shader::Shader()
 		:id(0) {
 	}
-	Shader::Shader(std::string vertexPath, std::string fragmentPath)
+	Shader::Shader(const std::string& vertexPath, const std::string& fragmentPath)
 	{
 		CompileFromFile(vertexPath, fragmentPath);
 	}
@@ -290,43 +289,43 @@ namespace LibGui
 		glDeleteProgram(id);
 	}
 
-	void Shader::Bind()
+	void Shader::Bind() const
 	{
 		glUseProgram(id);
 	}
-	void Shader::Unbind()
+	void Shader::Unbind() const
 	{
 		glUseProgram(0);
 	}
 
-	void Shader::SetUniform1Int(std::string name, int val)
+	void Shader::SetUniform1Int(const std::string& name, const int val) const
 	{ Bind(); glUniform1i(glGetUniformLocation(id, name.c_str()), val); }
-	void Shader::SetUniformVec2i(std::string name, Vec2i val)
+	void Shader::SetUniformVec2i(const std::string& name, const Vec2i val) const
 	{ Bind(); glUniform2i(glGetUniformLocation(id, name.c_str()), val.x, val.y); }
-	void Shader::SetUniform3Int(std::string name, int x, int y, int z)
+	void Shader::SetUniform3Int(const std::string&  name, const int x, const int y, const int z) const
 	{ Bind(); glUniform3i(glGetUniformLocation(id, name.c_str()), x, y, z); }
-	void Shader::SetUniform4Int(std::string name, int x, int y, int z, int w)
+	void Shader::SetUniform4Int(const std::string&  name, const int x, const int y, const int z, const int w) const
 	{ Bind(); glUniform4i(glGetUniformLocation(id, name.c_str()), x, y, z, w); }
 
-	void Shader::SetUniform1UInt(std::string name, unsigned int val)
+	void Shader::SetUniform1UInt(const std::string& name, const unsigned int val) const
 	{ Bind(); glUniform1ui(glGetUniformLocation(id, name.c_str()), val); }
-	void Shader::SetUniform2UInt(std::string name, unsigned int x, unsigned int y)
+	void Shader::SetUniform2UInt(const std::string& name, const unsigned int x, const unsigned int y) const
 	{ Bind(); glUniform2ui(glGetUniformLocation(id, name.c_str()), x, y); }
-	void Shader::SetUniform3UInt(std::string name, unsigned int x, unsigned int y, unsigned int z, unsigned int w)
+	void Shader::SetUniform3UInt(const std::string& name, const unsigned int x, const unsigned int y, const unsigned int z) const
 	{ Bind(); glUniform3ui(glGetUniformLocation(id, name.c_str()), x, y, z); }
-	void Shader::SetUniform4UInt(std::string name, unsigned int x, unsigned int y, unsigned int z, unsigned int w)
+	void Shader::SetUniform4UInt(const std::string& name, const unsigned int x, const unsigned int y, const unsigned int z, const unsigned int w) const
 	{ Bind(); glUniform4ui(glGetUniformLocation(id, name.c_str()), x, y, z, w); }
 
-	void Shader::SetUniform1Float(std::string name, float val)
+	void Shader::SetUniform1Float(const std::string& name, const float val) const
 	{ Bind(); glUniform1f(glGetUniformLocation(id, name.c_str()), val); }
-	void Shader::SetUniformVec2(std::string name, Vec2 val)
+	void Shader::SetUniformVec2(const std::string& name, const Vec2 val) const
 	{ Bind(); glUniform2i(glGetUniformLocation(id, name.c_str()), val.x, val.y); }
-	void Shader::SetUniform3Float(std::string name, float x, float y, float z)
+	void Shader::SetUniform3Float(const std::string& name, const float x, const float y, const float z) const
 	{ Bind(); glUniform3i(glGetUniformLocation(id, name.c_str()), x, y, z); }
-	void Shader::SetUniform4Float(std::string name, float x, float y, float z, float w)
+	void Shader::SetUniform4Float(const std::string& name, const float x, const float y, const float z, const float w) const
 	{ Bind(); glUniform4i(glGetUniformLocation(id, name.c_str()), x, y, z, w); }
 
-	unsigned int Shader::GetID()
+	unsigned int Shader::GetID() const
 	{
 		return id;
 	}
@@ -342,7 +341,7 @@ namespace LibGui
 
 	//------------------<IMAGE>--------------------
 	// PIXEL struct
-	Color Pixel::ToColor()
+	Color Pixel::ToColor() const
 	{
 		return Color{
 			(R / 255.0f),
@@ -354,10 +353,10 @@ namespace LibGui
 	Pixel Pixel::FromColor(const Color& color)
 	{
 		return Pixel{
-			(unsigned char)(color.r * 255.0f),
-			(unsigned char)(color.g * 255.0f),
-			(unsigned char)(color.b * 255.0f),
-			(unsigned char)(color.a * 255.0f)
+			static_cast<unsigned char>(color.r * 255.0f),
+			static_cast<unsigned char>(color.g * 255.0f),
+			static_cast<unsigned char>(color.b * 255.0f),
+			static_cast<unsigned char>(color.a * 255.0f)
 		};
 	}
 
@@ -409,7 +408,7 @@ namespace LibGui
 	{
 		Clear(color);
 	}
-	Image::Image(unsigned char* Data, Vec2i Size)
+	Image::Image(const unsigned char* Data, const Vec2i Size)
 		:size(Size)
 	{
 		Clear(Color::White);
@@ -479,42 +478,42 @@ namespace LibGui
 	{
 		switch (side)
 		{
-		case Direction_Up:
-		{
-			data.erase(data.end() - count * size.x, data.end());
-			size.y -= count;
-			break;
-		}
-		case Direction_Bottom:
-		{
-			data.erase(data.begin(), data.begin() + count * size.x);
-			size.y -= count;
-			break;
-		}
-		case Direction_Right:
-		{
-			for (int y = size.y; y > 0; y--)
+			case Direction_Up:
 			{
-				data.erase(
-					data.begin() + y * size.x - count,
-					data.begin() + y * size.x
-				);
+				data.erase(data.end() - count * size.x, data.end());
+				size.y -= count;
+				break;
 			}
-			size.x -= count;
-			break;
-		}
-		case Direction_Left:
-		{
-			for (int y = size.y - 1; y >= 0; y--)
+			case Direction_Bottom:
 			{
-				data.erase(
-					data.begin() + y * size.x,
-					data.begin() + y * size.x + count
-				);
+				data.erase(data.begin(), data.begin() + count * size.x);
+				size.y -= count;
+				break;
 			}
-			size.x -= count;
-			break;
-		}
+			case Direction_Right:
+			{
+				for (int y = size.y; y > 0; y--)
+				{
+					data.erase(
+						data.begin() + y * size.x - count,
+						data.begin() + y * size.x
+					);
+				}
+				size.x -= count;
+				break;
+			}
+			case Direction_Left:
+			{
+				for (int y = size.y - 1; y >= 0; y--)
+				{
+					data.erase(
+						data.begin() + y * size.x,
+						data.begin() + y * size.x + count
+					);
+				}
+				size.x -= count;
+				break;
+			}
 		}
 	}
 
@@ -522,116 +521,116 @@ namespace LibGui
 	{
 		switch (side)
 		{
-		case Direction_Up:
-		{
-			if (size.x > img.size.x)
+			case Direction_Up:
 			{
-				Image i(Vec2i{ size.x - img.size.x, img.size.y }, fill);
-				img.MergeImage(Direction_Right, i);
-			}
-			else if (size.x < img.size.x)
-			{
-				Image i(Vec2i{ img.size.x - size.x, img.size.y }, fill);
-				img.MergeImage(Direction_Right, i);
-			}
+				if (size.x > img.size.x)
+				{
+					Image i(Vec2i{ size.x - img.size.x, img.size.y }, fill);
+					img.MergeImage(Direction_Right, i);
+				}
+				else if (size.x < img.size.x)
+				{
+					Image i(Vec2i{ img.size.x - size.x, img.size.y }, fill);
+					img.MergeImage(Direction_Right, i);
+				}
 
-			data.insert(data.end(), img.data.begin(), img.data.end());
-			size.y += img.size.y;
-			break;
-		}
-		case Direction_Bottom:
-		{
-			if (size.x > img.size.x)
-			{
-				Image i(Vec2i{ size.x - img.size.x, img.size.y }, fill);
-				img.MergeImage(Direction_Right, i);
+				data.insert(data.end(), img.data.begin(), img.data.end());
+				size.y += img.size.y;
+				break;
 			}
-			else if (size.x < img.size.x)
+			case Direction_Bottom:
 			{
-				Image i(Vec2i{ img.size.x - size.x, img.size.y }, fill);
-				img.MergeImage(Direction_Right, i);
-			}
+				if (size.x > img.size.x)
+				{
+					Image i(Vec2i{ size.x - img.size.x, img.size.y }, fill);
+					img.MergeImage(Direction_Right, i);
+				}
+				else if (size.x < img.size.x)
+				{
+					Image i(Vec2i{ img.size.x - size.x, img.size.y }, fill);
+					img.MergeImage(Direction_Right, i);
+				}
 
-			data.insert(data.begin(), img.data.begin(), img.data.end());
-			size.y += img.size.y;
-			break;
-		}
-		case Direction_Right:
-		{
-			const std::vector<Pixel> clear(img.size.x, Pixel::FromColor(fill));
-			for (int y = size.y; y > 0; y--)
-			{
-				if (y < img.size.y)
-					data.insert(data.begin() + y * size.x, img.data.begin() + y * img.size.x, img.data.begin() + (y + 1) * img.size.x);
-				else
-					data.insert(data.begin() + y * size.x, clear.begin(), clear.end());
+				data.insert(data.begin(), img.data.begin(), img.data.end());
+				size.y += img.size.y;
+				break;
 			}
-			size.x += img.size.x;
-			break;
-		}
-		case Direction_Left:
-		{
-			const std::vector<Pixel> clear(img.size.x, Pixel::FromColor(fill));
-			for (int y = size.y - 1; y >= 0; y--)
+			case Direction_Right:
 			{
-				if (y < img.size.y)
-					data.insert(data.begin() + y * size.x, img.data.begin() + y * img.size.x, img.data.begin() + (y + 1) * img.size.x);
-				else
-					data.insert(data.begin() + y * size.x, clear.begin(), clear.end());
+				const std::vector<Pixel> clear(img.size.x, Pixel::FromColor(fill));
+				for (int y = size.y; y > 0; y--)
+				{
+					if (y < img.size.y)
+						data.insert(data.begin() + y * size.x, img.data.begin() + y * img.size.x, img.data.begin() + (y + 1) * img.size.x);
+					else
+						data.insert(data.begin() + y * size.x, clear.begin(), clear.end());
+				}
+				size.x += img.size.x;
+				break;
 			}
-			size.x += img.size.x;
-			break;
-		}
+			case Direction_Left:
+			{
+				const std::vector<Pixel> clear(img.size.x, Pixel::FromColor(fill));
+				for (int y = size.y - 1; y >= 0; y--)
+				{
+					if (y < img.size.y)
+						data.insert(data.begin() + y * size.x, img.data.begin() + y * img.size.x, img.data.begin() + (y + 1) * img.size.x);
+					else
+						data.insert(data.begin() + y * size.x, clear.begin(), clear.end());
+				}
+				size.x += img.size.x;
+				break;
+			}
 		}
 	}
 	void Image::MergeCount(Direction_ side, int count, Color color)
 	{
 		switch (side)
 		{
-		case Direction_Up:
-		case Direction_Bottom:
-		{
-			Image img(Vec2i{ size.x, count }, color);
-			MergeImage(side, img);
-			break;
-		}
-		case Direction_Right:
-		case Direction_Left:
-		{
-			Image img(Vec2i{ count, size.y }, color);
-			MergeImage(side, img);
-			break;
-		}
+			case Direction_Up:
+			case Direction_Bottom:
+			{
+				Image img(Vec2i{ size.x, count }, color);
+				MergeImage(side, img);
+				break;
+			}
+			case Direction_Right:
+			case Direction_Left:
+			{
+				Image img(Vec2i{ count, size.y }, color);
+				MergeImage(side, img);
+				break;
+			}
 		}
 	}
 
-	bool Image::SavePNG(const std::string& path)
+	bool Image::SavePNG(const std::string& path) const
 	{
 		return stbi_write_png(path.c_str(), size.x, size.y, 4, data.data(), size.x * sizeof(Pixel));
 	}
-	bool Image::SaveJPG(const std::string& path, int quality)
+	bool Image::SaveJPG(const std::string& path, int quality) const
 	{
 		return stbi_write_jpg(path.c_str(), size.x, size.y, 4, data.data(), quality);
 	}
-	bool Image::SaveTGA(const std::string& path)
+	bool Image::SaveTGA(const std::string& path) const
 	{
 		return stbi_write_tga(path.c_str(), size.x, size.y, 4, data.data());
 	}
-	bool Image::SaveBMP(const std::string& path)
+	bool Image::SaveBMP(const std::string& path) const
 	{
 		return stbi_write_bmp(path.c_str(), size.x, size.y, 4, data.data());
 	}
 
 	unsigned char* Image::GetData()
 	{
-		return (unsigned char*)(data.data());
+		return reinterpret_cast<unsigned char*>(data.data());
 	}
 	std::vector<Pixel> Image::GetDataCopy()
 	{
 		return data;
 	}
 
-	void Image::SetDataRaw(unsigned char* Data, Vec2i Size)
+	void Image::SetDataRaw(const unsigned char* Data, const Vec2i Size)
 	{
 		Resize(Size);
 		memcpy(data.data(), Data, size.x * size.y * 4 * sizeof(char));
@@ -711,17 +710,17 @@ namespace LibGui
 		LoadFile(path);
 	}
 
-	void Texture::Bind()
+	void Texture::Bind() const
 	{
 		glActiveTexture(GL_TEXTURE0 + texSlot);
 		glBindTexture(GL_TEXTURE_2D, id);
 	}
-	void Texture::Unbind()
+	void Texture::Unbind() const
 	{
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
-	unsigned int Texture::GetID()
+	unsigned int Texture::GetID() const
 	{
 		return id;
 	}
@@ -743,7 +742,7 @@ namespace LibGui
 	}
 
 	MouseCursor::MouseCursor()
-		:parent_window(static_cast<GLFWwindow*>(0)) {
+		:parent_window(nullptr) {
 	}
 	MouseCursor::MouseCursor(GLFWwindow* parent)
 		:parent_window(parent) {
@@ -751,7 +750,7 @@ namespace LibGui
 
 	void MouseCursor::Update()
 	{
-		if (parent_window == static_cast<GLFWwindow*>(0))
+		if (parent_window == nullptr)
 			Debug::Error("Trying to .Update() a non-initialized LibGui::MouseCursor");
 
 		double xPos, yPos = 0;
@@ -784,7 +783,7 @@ namespace LibGui
 
 	//------------------<KEY TRACKER>------------------
 	// UPPERCASE FUNCTION - glfwGetKey() takes letter names only as UPPERCASE
-	int UpperKey(int key)
+	static int UpperKey(int key)
 	{
 		if (key >= 'a' && key <= 'z') key -= 32;
 		return key;
@@ -792,7 +791,7 @@ namespace LibGui
 
 	// KEY TRACKER
 	KeyTracker::KeyTracker()
-		:parent_window((GLFWwindow*)0) {
+		:parent_window(nullptr) {
 	}
 	KeyTracker::KeyTracker(GLFWwindow* parent)
 		:parent_window(parent) {
@@ -800,7 +799,7 @@ namespace LibGui
 
 	void KeyTracker::Update()
 	{
-		if (parent_window == (GLFWwindow*)0)
+		if (parent_window == nullptr)
 			Debug::Error("Trying to .Update() a non-initialized LibGui::KeyTracker");
 
 		for (auto& [key, status] : tracked_keys)
@@ -831,61 +830,60 @@ namespace LibGui
 	}
 	void KeyTracker::Track(char key, bool update)
 	{
-		Track((int)key);
+		Track(static_cast<int>(key));
 	}
 	void KeyTracker::Track(FunctionalKey_ key, bool update)
 	{
-		Track((int)key);
+		Track(static_cast<int>(key));
 	}
 	void KeyTracker::Track(const std::vector<int>& keys)
 	{
-		for (int key : keys)
+		for (const int key : keys)
 		{
 			Track(key);
 		}
 	}
-
-	const KeyStatus KeyTracker::operator[] (int key)
+	KeyStatus KeyTracker::operator[] (int key)
 	{
 		key = UpperKey(key);
 		if (!tracked_keys.contains(key))
 		{
 			Debug::Error("Trying to use KeyTracker::operator[](int) to get non-tracked key; wanted key = " + std::to_string(key));
-			return { false };
+			return {};
 		}
 
 		return tracked_keys[key];
 	}
-	const KeyStatus KeyTracker::operator[] (char key)
+	KeyStatus KeyTracker::operator[] (char key)
 	{
 		key = UpperKey(key);
 		if (!tracked_keys.contains(key))
 		{
 			Debug::Error("Trying to use KeyTracker::operator[](char) to get non-tracked key; wanted key = " + std::to_string(key));
-			return { false };
+			return {};
 		}
 
 		return tracked_keys[key];
 	}
-	const KeyStatus KeyTracker::operator[] (FunctionalKey_ key)
+	KeyStatus KeyTracker::operator[] (FunctionalKey_ key)
 	{
-		key = (FunctionalKey_)UpperKey(key);
+		key = static_cast<FunctionalKey_>(UpperKey(key));
 		if (!tracked_keys.contains(key))
 		{
 			Debug::Error("Trying to use KeyTracker::operator[](LibGui::FunctionalKey_) to get non-tracked key; wanted key = " + std::to_string(key));
-			return { false };
+			return {};
 		}
 
 		return tracked_keys[key];
 	}
 
 	//------------------<WINDOW>------------------
-	std::map<GLFWwindow*, Window*> window_pointer_map;
-	void PressedCharCallback(GLFWwindow* window, unsigned int character)
+	static std::map<GLFWwindow*, Window*> window_pointer_map;
+	static void PressedCharCallback(GLFWwindow* window, const unsigned int character)
 	{
 		window_pointer_map[window]->pressed_character = character;
 	}
-	void MouseScrollCallback(GLFWwindow* window, double x_offset, double y_offset)
+	static void MouseScrollCallback(GLFWwindow* window, const double x_offset, const double y_offset)
 	{
 		window_pointer_map[window]->cursor.scroll = y_offset;
 	}
@@ -940,20 +938,20 @@ namespace LibGui
 		Close();
 	}
 
-	const bool Window::GetKeyPressed(int key)
+	bool Window::GetKeyPressed(const int key) const
 	{
 		return glfwGetKey(window, UpperKey(key)) == GLFW_PRESS;
 	}
-	const bool Window::GetKeyPressed(char key)
+	bool Window::GetKeyPressed(const char key) const
 	{
-		return GetKeyPressed((int)key);
+		return GetKeyPressed(static_cast<int>(key));
 	}
-	const bool Window::GetKeyPressed(FunctionalKey_ key)
+	bool Window::GetKeyPressed(const FunctionalKey_ key) const
 	{
-		return GetKeyPressed((int)key);
+		return GetKeyPressed(static_cast<int>(key));
 	}
 
-	double lastTick;
+	static double lastTick;
 	void Window::Draw()
 	{
 		// Update library
@@ -985,7 +983,7 @@ namespace LibGui
 			if (key_tracker[FunctionalKey_F11].clicked)
 			{
 				if (fullscreen)
-					glfwSetWindowMonitor(window, NULL, fPos.x, fPos.y, fSize.x, fSize.y, GLFW_DONT_CARE);
+					glfwSetWindowMonitor(window, nullptr, fPos.x, fPos.y, fSize.x, fSize.y, GLFW_DONT_CARE);
 				else 
 				{
 					int len = 0;
@@ -1040,7 +1038,7 @@ namespace LibGui
 			fSize = { xs, ys };
 		}
 	}
-	void Window::PushDraw()
+	void Window::PushDraw() const
 	{
 		if (closed)
 		{
@@ -1063,7 +1061,17 @@ namespace LibGui
 		return closed;
 	}
 
-	void Window::SetIcon(Image img, bool clamp)
+	void Window::Reflag(const int flags)
+	{
+		FullscreenOnF11 = flags & 1;
+
+		if (FullscreenOnF11)
+			key_tracker.Track(FunctionalKey_F11);
+		if ((flags & 2) >> 1)
+			glfwSetWindowAttrib(window, GLFW_RESIZABLE, false);
+	}
+
+	void Window::SetIcon(Image img, bool clamp) const
 	{
 		if (clamp)
 		{
@@ -1081,21 +1089,18 @@ namespace LibGui
 		i.pixels = img.GetData();
 		glfwSetWindowIcon(window, 1, &i);
 	}
-	void Window::Reflag(int flags)
-	{
-		FullscreenOnF11 = flags & 1;
 
-		if (FullscreenOnF11)
-			key_tracker.Track(FunctionalKey_F11);
-		if ((flags & 2) >> 1)
-			glfwSetWindowAttrib(window, GLFW_RESIZABLE, false);
-	}
-
-	Image Window::Screenshot(bool transparent)
+	Image Window::Screenshot(const bool transparent) const
 	{
 		glfwMakeContextCurrent(window);
 
-		unsigned char* Data = (unsigned char*)malloc((size_t)(size.x * size.y * 4));
+		const auto Data =
+			static_cast<unsigned char*>(
+				malloc(
+					static_cast<size_t>(size.x * size.y * 4)
+				)
+			)
+		;
 
 		glPixelStorei(GL_PACK_ALIGNMENT, 1);
 		glReadPixels(0, 0, size.x, size.y, GL_RGBA, GL_UNSIGNED_BYTE, Data);
@@ -1107,7 +1112,7 @@ namespace LibGui
 		return img;
 	}
 
-	void Window::Bind()
+	void Window::Bind() const
 	{
 		if (closed)
 		{
@@ -1120,7 +1125,7 @@ namespace LibGui
 	//------------------<RECTANGLE INPUT FUNCTIONS>-------
 	RectangleInput::~RectangleInput(){}
 
-	bool RectangleInput::CompareMouseToThis(Vec2 pos, Vec2 scale, float direction)
+	bool RectangleInput::CompareMouseToThis(const Vec2 pos, const Vec2 scale, const float direction) const
 	{
 		// instead of rotating the block, i... rotate the mouse backwards
 		Vec2 up = Vec2{ std::cos(radians(-direction)), std::sin(radians(-direction)) };
@@ -1154,18 +1159,90 @@ namespace LibGui
 		return Rect_OnMouseEnter(anchor) && context.cursor.left_button.released;
 	}
 
-	Window& RectangleInput::GetContext()
+	Window& RectangleInput::GetContext() const
 	{
 		return context;
 	}
 
+	//------------------<SHAPES>--------------------------
+	namespace Shapes
+	{
+		Shape Rectangle(const Vec2 anchor)
+		{
+			return Shape{
+				{
+					//point pos/						                    /tex coord/           /point tint/
+					Vertex{Vec2{ 0.0f, -1.0f}+anchor,		Vec2{0, 0},     Color::White},
+					Vertex{Vec2{ 0.0f,  0.0f}+anchor,		Vec2{0, 1},     Color::White},
+					Vertex{Vec2{-1.0f, -1.0f}+anchor,		Vec2{1, 0},     Color::White},
+					Vertex{Vec2{-1.0f,  0.0f}+anchor,		Vec2{1, 1},     Color::White}
+				},
+				{ 0, 1, 2, 1, 2, 3 }
+			};
+		};
+		Shape Polygon(std::vector<Vertex>& vertices)
+		{
+			std::vector<unsigned int> indices = {};
+			for (int x = 1; x < vertices.size() - 1; x++)
+			{
+				indices.push_back(0);
+				indices.push_back(x);
+				indices.push_back(x + 1);
+			}
+
+			return {vertices, indices};
+		}
+		Shape RegularPolygon(const int verticesCount)
+		{
+			std::vector<Vertex> vertices;
+			for (int i = 0; i < verticesCount; i++)
+			{
+				// swapped sine & cosine to be rotated 'correctly' without changing direction
+				vertices.push_back(Vertex{ Vec2{
+					std::sin(radians(i * (360 / verticesCount))),
+					std::cos(radians(i * (360 / verticesCount)))
+				}, Color::White });
+			}
+			return Polygon(vertices);
+		}
+		Shape LineStrip(const std::vector<Vec2>& points)
+		{
+			std::vector<unsigned int> indices; indices.reserve(points.size());
+			std::vector<Vertex> vertices; vertices.reserve(points.size());
+			for (unsigned int i = 0; i < points.size(); i++)
+			{
+				vertices.emplace_back(Vec2{0, 0}-points[i], Color::White);
+				indices.push_back(i);
+			}
+
+			return {vertices, indices};
+		}
+		Shape LineStrip(std::vector<Vertex> points)
+		{
+			std::vector<unsigned int> indices; indices.reserve(points.size());
+			for (unsigned int i = 0; i < points.size(); i++)
+			{
+				points[i].pos = Vec2{0, 0}-points[i].pos;
+				indices.push_back(i);
+			}
+
+			return {points, indices};
+		}
+	}
+
 	//------------------<STATIC OBJECTS>------------------
 	// CONSTRUCTOR functions
-	void Object::Construct(const std::vector<Vertex>& Vertices, const std::vector<unsigned int>& Indices)
-	{
+	void Object::Construct(const std::vector<Vertex>& Vertices, const std::vector<unsigned int>& Indices) {
 		context.Bind();
 
-		indicesCount = (unsigned int)Indices.size();
+		if (VAO != 0)
+		{
+			glDeleteVertexArrays(1, &VAO);
+			glDeleteBuffers(1, &VBO);
+			glDeleteBuffers(1, &EBO);
+		}
+
+		indicesCount = static_cast<unsigned int>(Indices.size());
 
 		glGenVertexArrays(1, &VAO);
 		glBindVertexArray(VAO);
@@ -1178,106 +1255,63 @@ namespace LibGui
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, Indices.size() * sizeof(unsigned int), Indices.data(), GL_STATIC_DRAW);
 
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), nullptr);
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(2 * sizeof(float)));
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(2 * sizeof(float)));
 		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(4 * sizeof(float)));
+		glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(4 * sizeof(float)));
 		glEnableVertexAttribArray(2);
 	}
 
-	void Object::InitAsCustom(const std::vector<Vertex>& Vertices, const std::vector<unsigned int>& Indices)
+	Object::Object(const Vec2 position, const Vec2 scale, const Color color, const Shapes::Shape& shape, const int UniformFlags)
+		:RectangleInput(*DefaultWindow), pos(position), scale(scale), color(color), UniformFlags(UniformFlags), shader(DefaultShader)
 	{
-		Construct(Vertices, Indices);
+		Construct(shape.first, shape.second);
 	}
-	void Object::InitAsCustomPolygon(const std::vector<Vertex>& Vertices)
+	Object::Object(const Vec2 position, const Vec2 scale, Texture& texture, const Shapes::Shape& shape, const int UniformFlags)
+		:RectangleInput(*DefaultWindow), pos(position), scale(scale), color(Color::White), UniformFlags(UniformFlags), shader(DefaultShader), texture(&texture)
 	{
-		std::vector<unsigned int> Indices = {};
-		for (int x = 1; x < Vertices.size() - 1; x++)
-		{
-			Indices.push_back(0);
-			Indices.push_back(x);
-			Indices.push_back(x + 1);
-		}
+		Construct(shape.first, shape.second);
+	}
 
-		Construct(Vertices, Indices);
-	}
-	void Object::InitAsRectangle(Vec2 position, Vec2 size, Color Color, Vec2 anchor)
+	Object::Object(const Vec2 position, const Vec2 scale, const Color color, const Shapes::Shape& shape, Window& window, const int UniformFlags)
+		:RectangleInput(window), pos(position), scale(scale), color(color), UniformFlags(UniformFlags), shader(DefaultShader)
 	{
-		pos = position;
-		scale = size;
-		color = Color;
-		Construct({
-			//point pos/						/tex coord/     /point tint/
-	   Vertex{Vec2{ 0.0f, -1.0f}+anchor,		Vec2{0, 0},     Color::White},
-	   Vertex{Vec2{ 0.0f,  0.0f}+anchor,		Vec2{0, 1},     Color::White},
-	   Vertex{Vec2{-1.0f, -1.0f}+anchor,		Vec2{1, 0},     Color::White},
-	   Vertex{Vec2{-1.0f,  0.0f}+anchor,		Vec2{1, 1},     Color::White}
-			}, { 0, 1, 2, 1, 2, 3 });
+		Construct(shape.first, shape.second);
 	}
-	void Object::InitAsRectangle(Vec2 position, Vec2 size, Texture& tex, Vec2 anchor)
+	Object::Object(const Vec2 position, const Vec2 scale, Texture& texture, const Shapes::Shape& shape, Window& window, const int UniformFlags)
+		:RectangleInput(window), pos(position), scale(scale), color(Color::White), UniformFlags(UniformFlags), shader(DefaultShader), texture(&texture)
 	{
-		pos = position;
-		scale = size;
-		texture = &tex;
-		color = Color::White;
-		Construct({
-			//point pos/						/tex coord/     /point tint/
-	   Vertex{Vec2{ 0.0f, -1.0f}+anchor,		Vec2{0, 0},     Color::White},
-	   Vertex{Vec2{ 0.0f,  0.0f}+anchor,		Vec2{0, 1},     Color::White},
-	   Vertex{Vec2{-1.0f, -1.0f}+anchor,		Vec2{1, 0},     Color::White},
-	   Vertex{Vec2{-1.0f,  0.0f}+anchor,		Vec2{1, 1},     Color::White}
-			}, { 0, 1, 2, 1, 2, 3 });
+		Construct(shape.first, shape.second);
 	}
-	void Object::InitAsRegularPolygon(Vec2 position, int verticesCount, int radius, Color Color)
-	{
-		pos = position;
-		scale = Vec2{ radius, radius };
-		color = Color;
-		direction = 0;
-		std::vector<Vertex> verts;
-		for (int i = 0; i < verticesCount; i++)
-		{
-			verts.push_back(Vertex{ Vec2{
-				std::cos(radians(i * (360 / verticesCount))),
-				std::sin(radians(i * (360 / verticesCount)))
-			}, Color::White });
-		}
-		InitAsCustomPolygon(verts);
-	}
-	void Object::InitAsLineStrip(const std::vector<Vertex>& points)
-	{
-		std::vector<unsigned int> indices; indices.reserve(points.size());
-		for (unsigned int i = 0; i < points.size(); i++) indices.push_back(i);
-		
-		Construct(points, indices);
-	}
-	void Object::InitAsLineStrip(const std::vector<Vec2>& points, Color Color)
-	{
-		color = Color;
 
-		std::vector<unsigned int> indices; indices.reserve(points.size());
-		std::vector<Vertex> vertices; vertices.reserve(points.size());
-		for (unsigned int i = 0; i < points.size(); i++) 
-		{
-			indices.push_back(i);
-			vertices.push_back({ points[i], Color::White });
-		}
-		
-		Construct(vertices, indices);
+	Object::Object(const Vec2 position, const Vec2 scale, const Color color, const Shapes::Shape& shape, Shader& shader, const int UniformFlags)
+		:RectangleInput(*DefaultWindow), pos(position), scale(scale), color(color), UniformFlags(UniformFlags), shader(shader)
+	{
+		Construct(shape.first, shape.second);
 	}
-	
-	Object::Object() 
-		:RectangleInput(*LibGui::DefaultWindow), shader(DefaultShader) {
+	Object::Object(const Vec2 position, const Vec2 scale, Texture& texture, const Shapes::Shape& shape, Shader& shader, const int UniformFlags)
+		:RectangleInput(*DefaultWindow), pos(position), scale(scale), color(Color::White), UniformFlags(UniformFlags), shader(shader), texture(&texture)
+	{
+		Construct(shape.first, shape.second);
 	}
-	Object::Object(Window& window) 
-		:RectangleInput(window), shader(DefaultShader) {
+
+	Object::Object(const Vec2 position, const Vec2 scale, const Color color, const Shapes::Shape& shape, Window& window, Shader& shader, const int UniformFlags)
+		:RectangleInput(window), pos(position), scale(scale), color(color), UniformFlags(UniformFlags), shader(shader)
+	{
+		Construct(shape.first, shape.second);
 	}
-	Object::Object(Shader& Shader) 
-		:RectangleInput(*LibGui::DefaultWindow), shader(Shader) {
+	Object::Object(const Vec2 position, const Vec2 scale, Texture& texture, const Shapes::Shape& shape, Window& window, Shader& shader, const int UniformFlags)
+		:RectangleInput(window), pos(position), scale(scale), color(Color::White), UniformFlags(UniformFlags), shader(shader), texture(&texture)
+	{
+		Construct(shape.first, shape.second);
 	}
-	Object::Object(Window& window, Shader& Shader) 
-		:RectangleInput(window), shader(Shader) {
+
+	Object::~Object()
+	{
+		glDeleteVertexArrays(1, &VAO);
+		glDeleteBuffers(1, &VBO);
+		glDeleteBuffers(1, &EBO);
 	}
 
 	// RENDER functions
@@ -1287,9 +1321,9 @@ namespace LibGui
 	*/
 	constexpr static float GetCoord(float x, bool normalized, int x_size)
 	{
-		return x / (!normalized * (float)x_size + normalized);
+		return x / (!normalized * static_cast<float>(x_size) + normalized);
 	}
-	void Object::SetupUniforms()
+	void Object::SetupUniforms() const
 	{
 		bool scaleX = ((UniformFlags & UniformFlag_XScale_Normalized) >> 2);
 		bool scaleY = ((UniformFlags & UniformFlag_YScale_Normalized) >> 3);
@@ -1324,7 +1358,7 @@ namespace LibGui
 
 		SetEdges(shader, LG_EdgeMin, LG_EdgeMax);
 	}
-	void Object::Render(bool custom_uniSetup)
+	void Object::Render(bool custom_uniSetup) const
 	{
 		if (!custom_uniSetup)
 		{
@@ -1339,11 +1373,11 @@ namespace LibGui
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 		glDrawElements(
 			((UniformFlags & UniformFlag_RenderAsLine) >> 4)? GL_LINE_STRIP : GL_TRIANGLES,
-			indicesCount, GL_UNSIGNED_INT, 0);
+			indicesCount, GL_UNSIGNED_INT, nullptr);
 	}
 
 	// INTERACTION functions
-	bool Object::Rect_OnMouseEnter(Vec2 anchor)
+	bool Object::Rect_OnMouseEnter(const Vec2 anchor)
 	{
 		// pos if anchor was on default (0.5, 0.5)
 		Vec2 r_pos{ pos.x - (anchor.x - 0.5f) * scale.x, pos.y - (anchor.y - 0.5f) * scale.y };
@@ -1353,16 +1387,22 @@ namespace LibGui
 	//------------------<DYNAMIC TEXT>------------------
 	// DYNAMIC TEXT
 	DynamicText::DynamicText(DT_TextureAtlas& font, Vec2i position, Color text_color, Color background_color)
-		:RectangleInput(*DefaultWindow), atlas(&font), pos(position), textColor(text_color), backColor(background_color)
-	{
-		core.InitAsRectangle(Vec2{ pos.x, pos.y }, Vec2{ 0, 0 }, Color::White, {1, 1});
-		background.InitAsRectangle({ pos.x, pos.y }, { 0, 0 }, Color::Transparent, { 0, 0 });
+		:RectangleInput(*DefaultWindow),
+		core(static_cast<Vec2>(position), { 0, 0 }, Color::White, Shapes::Rectangle({1, 1})),
+		background(static_cast<Vec2>(position), { 0, 0 }, Color::Transparent, Shapes::Rectangle({ 0, 0 })),
+		atlas(&font),
+		pos(position),
+		textColor(text_color),
+		backColor(background_color){
 	}
 	DynamicText::DynamicText(Window& window, DT_TextureAtlas& font, Vec2i position, Color text_color, Color background_color)
-		:RectangleInput(window), atlas(&font), pos(position), textColor(text_color), backColor(background_color), core(window), background(window)
-	{
-		core.InitAsRectangle(Vec2{ pos.x, pos.y }, Vec2{ 0, 0 }, Color::White, {1, 1});
-		background.InitAsRectangle({ pos.x, pos.y }, { 0, 0 }, Color::Transparent, { 0, 0 });
+		:RectangleInput(window),
+		core(static_cast<Vec2>(position), { 0, 0 }, Color::White, Shapes::Rectangle({1, 1}), window),
+		background(static_cast<Vec2>(position), { 0, 0 }, Color::Transparent, Shapes::Rectangle({ 0, 0 }), window),
+		atlas(&font),
+		pos(position),
+		textColor(text_color),
+		backColor(background_color){
 	}
 
 	void DynamicText::UpdateTextFieldSize()
@@ -1388,7 +1428,7 @@ namespace LibGui
 		textFieldSize = size;
 	}
 
-	float DynamicText::RenderChar(char character, Vec2 char_pos)
+	float DynamicText::RenderChar(char character, Vec2 char_pos) const
 	{
 		dtS.Bind();
 		Texture& texture = atlas->atlas[character].texture;
@@ -1533,7 +1573,7 @@ namespace LibGui
 
 		return index;
 	}
-	Vec2 DynamicText::GetPositionOnIndex(int character_index, bool left_side)
+	Vec2 DynamicText::GetPositionOnIndex(int character_index, bool left_side) const
 	{
 		Vec2i char_pos{ 0, 0 };
 		for (int i = 0; i < text.size(); ++i)
@@ -1602,7 +1642,8 @@ namespace LibGui
 		:TextInput(*DefaultWindow, font){
 	}
 	TextInput::TextInput(Window& window, DT_TextureAtlas& font)
-		:RectangleInput(window), textCursor(window), render(window, font, {0, 0})
+		:RectangleInput(window), render(window, font, {0, 0}),
+		textCursor({0, 0}, {5, font.maxHeight}, Color::Red, Shapes::Rectangle({0, 0}), window)
 	{
 		backColor = Color{0.1f, 0.1f, 0.1f};
 
@@ -1615,7 +1656,6 @@ namespace LibGui
 			FunctionalKey_Right,
 			FunctionalKey_Left
 			});
-		textCursor.InitAsRectangle({0, 0}, {5, font.maxHeight}, Color::Red, {0, 0});
 	}
 
 	void TextInput::Update(bool render_afterwards)
@@ -1636,16 +1676,16 @@ namespace LibGui
 			if (context.pressed_character != 0)
 			{
 				text.insert(text.begin() + cursor_pos, context.pressed_character);
-				cursor_pos = (int)std::clamp(cursor_pos + 1, 0, (int)text.size());
+				cursor_pos = static_cast<int>(std::clamp(cursor_pos + 1, 0, static_cast<int>(text.size())));
 			}
 			else if (context.key_tracker[FunctionalKey_Enter].clicked)
 			{
 				text.insert(text.begin() + cursor_pos, '\n');
-				cursor_pos = (int)std::clamp(cursor_pos + 1, 0, (int)text.size());
+				cursor_pos = static_cast<int>(std::clamp(cursor_pos + 1, 0, static_cast<int>(text.size())));
 			}
 			else if (context.key_tracker[FunctionalKey_Backspace].clicked && text.length() > 0 && cursor_pos > 0)
 			{
-				cursor_pos = (int)std::clamp(cursor_pos - 1, 0, (int)text.size());
+				cursor_pos = static_cast<int>(std::clamp(cursor_pos - 1, 0, static_cast<int>(text.size())));
 				text.erase(text.begin() + cursor_pos);
 			}
 			else if (context.key_tracker[FunctionalKey_Delete].clicked && text.length() > 0)
@@ -1676,11 +1716,11 @@ namespace LibGui
 			}
 			else if (context.key_tracker[FunctionalKey_Right].clicked)
 			{
-				cursor_pos = (int)std::clamp(cursor_pos + 1, 0, (int)text.size());
+				cursor_pos = static_cast<int>(std::clamp(cursor_pos + 1, 0, static_cast<int>(text.size())));
 			}
 			else if (context.key_tracker[FunctionalKey_Left].clicked)
 			{
-				cursor_pos = (int)std::clamp(cursor_pos - 1, 0, (int)text.size());
+				cursor_pos = static_cast<int>(std::clamp(cursor_pos - 1, 0, static_cast<int>(text.size())));
 			}
 		}
 
@@ -1693,7 +1733,7 @@ namespace LibGui
 		render.pos = pos;
 		
 		render.Render();
-		if (active && (int)std::floor(GetLibTime() / textCursorTickRate) % 2 == 0 &&
+		if (active && static_cast<int>(std::floor(GetLibTime() / textCursorTickRate)) % 2 == 0 &&
 			cursor_pos >= 0 && cursor_pos <= text.size())
 		{
 			textCursor.pos = render.GetPositionOnIndex(cursor_pos, true) + Vec2{ -(render.atlas->maxHeight*fontSize)/10.0f, 10.0f };
@@ -1710,32 +1750,38 @@ namespace LibGui
 
 	//------------------<GRAPH>------------------------------
 	Graph::Graph(Vec2 pos, Vec2 desSize, std::vector<float>* data_source, DT_TextureAtlas& font)
-		:RectangleInput(*DefaultWindow), position(pos), desired_size(desSize), data_source(data_source), text(font, {0, 0})
+		:RectangleInput(*DefaultWindow),
+		lines({0, 0}, {0, 0}, Color::White, {}, UniformFlag_RenderAsLine),
+		background({0, 0}, {0, 0}, {0.1f, 0.1f, 0.1f}, Shapes::Rectangle({0, 1})),
+		info_line({0, 0}, {1, 1}, Color::White,
+		{{{{0, 0}, infoLineColor}, {{-1, 0}, infoLineColor} }, {0, 1}},
+	UniformFlag_RenderAsLine),
+		text(font, {0, 0}),
+		data_source(data_source),
+		position(pos),
+		desired_size(desSize)
 	{
 		lines.UniformFlags |= UniformFlag_RenderAsLine;
 
-		info_line.UniformFlags |= UniformFlag_RenderAsLine;
-		info_line.InitAsCustom({{{0, 0}, infoLineColor}, {{-1, 0}, infoLineColor} }, {0, 1});
-
 		text.fontSize = 0.2f;
 		text.backgroundAddSize = { 0, 0 };
-
-		background.InitAsRectangle({ 0, 0 }, { 0, 0 }, backgroundColor, { 0, 1 });
 
 		Update();
 	}
 	Graph::Graph(Window& window, Vec2 pos, Vec2 desSize, std::vector<float>* data_source, DT_TextureAtlas& font)
-		:RectangleInput(window), position(pos), desired_size(desSize), data_source(data_source), text(window, font, {0, 0}), lines(window), background(window), info_line(window)
+	:RectangleInput(window),
+	lines({0, 0}, {0, 0}, Color::White, {}, window, UniformFlag_RenderAsLine),
+	background({0, 0}, {0, 0}, {0.1f, 0.1f, 0.1f}, Shapes::Rectangle({0, 1}), window),
+	info_line({0, 0}, {1, 1}, Color::White,
+		{{{{0, 0}, infoLineColor}, {{-1, 0}, infoLineColor} }, {0, 1}},
+		window, UniformFlag_RenderAsLine),
+	text(window, font, {0, 0}),
+	data_source(data_source),
+	position(pos),
+	desired_size(desSize)
 	{
-		lines.UniformFlags |= UniformFlag_RenderAsLine;
-
-		info_line.UniformFlags |= UniformFlag_RenderAsLine;
-		info_line.InitAsCustom({{{0, 0}, infoLineColor}, {{-1, 0}, infoLineColor} }, {0, 1});
-
 		text.fontSize = 0.2f;
 		text.backgroundAddSize = { 0, 0 };
-
-		background.InitAsRectangle({ 0, 0 }, { 0, 0 }, backgroundColor, { 0, 1 });
 
 		Update();
 	}
@@ -1750,25 +1796,25 @@ namespace LibGui
 		{
 			indices.push_back(i+1);
 			points.push_back(
-				{ { (-i-1) / (float)data_source->size(), data_source->at(i)},
+				{ { (-i-1) / static_cast<float>(data_source->size()), data_source->at(i)},
 				Color::White});
 
 			if (data_source->at(i) > biggest) biggest = data_source->at(i);
 		}
-		lines.InitAsCustom(points, indices);
+		lines.Construct(points, indices);
 	}
 
 	void Graph::Render()
 	{
 		const float PixPerUnit = desired_size.y / biggest;
-		text.text = std::to_string((int)biggest); text.UpdateTextFieldSize();
+		text.text = std::to_string(static_cast<int>(biggest)); text.UpdateTextFieldSize();
 		const int xOffset = anyText?text.textFieldSize.x:0;
 
 		finalSize = 
 			(
 				desired_size + 
 				Vec2{ 
-					(float)xOffset, 
+					static_cast<float>(xOffset),
 					text.atlas->maxHeight * fontSize * anyText
 				} + 
 				background_padding
@@ -1797,7 +1843,7 @@ namespace LibGui
 				info_line.Render();
 				if (anyText)
 				{
-					text.text = std::to_string((int)y);
+					text.text = std::to_string(static_cast<int>(y));
 					text.UpdateTextFieldSize();
 					text.pos = Vec2{ position.x + xOffset - (text.textFieldSize.x / 2) * scale, position.y - (y * PixPerUnit) * scale } + finalSize * Vec2{ -anchor.x, anchor.y };
 					text.Render();
@@ -1825,7 +1871,7 @@ namespace LibGui
 			Debug::FatalError("GLFW failed to initialize!");
 
 		// Create window, and context with it
-		MainWindow = glfwCreateWindow(100, 100, "MAIN", NULL, NULL);
+		MainWindow = glfwCreateWindow(100, 100, "MAIN", nullptr, nullptr);
 		if (!MainWindow)
 		{
 			Debug::FatalError("Failed to create window!");
@@ -1836,7 +1882,7 @@ namespace LibGui
 
 		// Initialize glad (OpenGL)
 		gladLoadGL();
-		if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+		if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
 		{
 			Debug::FatalError("Failed to initialize GLAD");
 			return nullptr;
@@ -1847,7 +1893,7 @@ namespace LibGui
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-		// Set up stbi (image loading/writing library)
+		// Set up stb_image and stb_image_write
 		stbi_set_flip_vertically_on_load(true);
 		stbi_flip_vertically_on_write(true);
 
@@ -1942,7 +1988,7 @@ namespace LibGui
 		bool LogRepeated = false;
 		bool ErrorCrash = false;
 
-		std::string lastLog = "";
+		static std::string lastLog = "";
 		void Happy(const std::string& message)
 		{
 			if ("HAPPY$" + message == lastLog && !LogRepeated)

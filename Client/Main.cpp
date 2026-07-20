@@ -5,24 +5,22 @@ using namespace LibGui;
 int main()
 {
    // initialize library and create main window
-   LibGui::Window MyWindow(LibGui::Init(), "My LibGui window", {500, 500});
-
+   Window MyWindow(Init(), "My LibGui window", {500, 500});
    DT_TextureAtlas roboto("/usr/share/fonts/truetype/roboto/unhinted/RobotoTTF/Roboto-Regular.ttf");
 
-   TextInput text(roboto);
-   text.pos = {100, 100};
-   text.minSize = {150, -1};
-   text.fontSize = 0.5f;
+   std::vector<float> data = {0, 1, 1, 2, 3, 5, 8, 13, 21, 34};
+
+   Graph mygraph({100, 400}, {300, 300}, &data, roboto);
 
    while (!MyWindow.ShouldClose())
    {
       MyWindow.Draw();
 
-      text.Update();
+      mygraph.Render();
 
       MyWindow.PushDraw();
    }
 
-   LibGui::Terminate();
+   Terminate();
    return 0;
 }

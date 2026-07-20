@@ -132,41 +132,41 @@ struct Color
     Color(int R, int G, int B, int A) : r(static_cast<float>(R)), g(static_cast<float>(G)), b(static_cast<float>(B)), a(static_cast<float>(A)) {}
     Color(float R, float G, float B, float A) : r(R), g(G), b(B), a(A) {}
 
-    Color operator+ (const Color& A)
+    Color operator+ (const Color& A) const
     {
         return Color(r + A.r, g + A.g, b + A.b, a + A.a);
     }
-    Color operator- (const Color& A)
+    Color operator- (const Color& A) const
     {
         return Color(r - A.r, g - A.g, b - A.b, a - A.a);
     }
-    Color operator* (const Color& A)
+    Color operator* (const Color& A) const
     {
         return Color(r * A.r, g * A.g, b * A.b, a * A.a);
     }
-    Color operator/ (const Color& A)
+    Color operator/ (const Color& A) const
     {
         return Color(r / A.r, g / A.g, b / A.b, a / A.a);
     }
 
-    Color operator+ (const float A)
+    Color operator+ (const float A) const
     {
         return Color(r + A, g + A, b + A, a + A);
     }
-    Color operator- (const float A)
+    Color operator- (const float A) const
     {
         return Color(r - A, g - A, b - A, a - A);
     }
-    Color operator* (const float A)
+    Color operator* (const float A) const
     {
         return Color(r * A, g * A, b * A, a * A);
     }
-    Color operator/ (const float A)
+    Color operator/ (const float A) const
     {
         return Color(r / A, g / A, b / A, a / A);
     }
 
-    bool operator== (const Color& A)
+    bool operator== (const Color& A) const
     {
         return r == A.r && g == A.g && b == A.b && a == A.a;
     }
@@ -336,7 +336,7 @@ namespace LibGui
         TextFile(const std::string& path, bool append = true);
         ~TextFile();
 
-        void Write(std::string& data);
+        void Write(const std::string& data);
         std::string Get();
     };
 
@@ -351,32 +351,32 @@ namespace LibGui
         bool compilationSuccessful = false;
         std::vector<std::string> compilationErrors = {};
 
-        void Compile(const std::string vertexSrc, const std::string fragmentSrc);
-        void CompileFromFile(const std::string vertexPath, const std::string fragmentPath);
+        void Compile(const std::string& vertexSrc, const std::string& fragmentSrc);
+        void CompileFromFile(const std::string& vertexPath, const std::string& fragmentPath);
 
         Shader();
-        Shader(std::string vertexPath, std::string fragmentPath);
+        Shader(const std::string& vertexPath, const std::string& fragmentPath);
         ~Shader();
 
-        void Bind();
-        void Unbind();
+        void Bind() const;
+        void Unbind() const;
 
-        void SetUniform1Int(std::string name, int val);
-        void SetUniformVec2i(std::string name, Vec2i val); // aka SetUniform2Int()
-        void SetUniform3Int(std::string name, int x, int y, int z);
-        void SetUniform4Int(std::string name, int x, int y, int z, int w);
+        void SetUniform1Int(const std::string& name, const int val) const;
+        void SetUniformVec2i(const std::string& name, const Vec2i val) const; // aka SetUniform2Int()
+        void SetUniform3Int(const std::string& name, const int x, const int y, const int z) const;
+        void SetUniform4Int(const std::string& name, const int x, const int y, const int z, const int w) const;
 
-        void SetUniform1UInt(std::string name, unsigned int val);
-        void SetUniform2UInt(std::string name, unsigned int x, unsigned int y);
-        void SetUniform3UInt(std::string name, unsigned int x, unsigned int y, unsigned int z, unsigned int w);
-        void SetUniform4UInt(std::string name, unsigned int x, unsigned int y, unsigned int z, unsigned int w);
+        void SetUniform1UInt(const std::string& name, const unsigned int val) const;
+        void SetUniform2UInt(const std::string& name, const unsigned int x, const unsigned int y) const;
+        void SetUniform3UInt(const std::string& name, const unsigned int x, const unsigned int y, const unsigned int z) const;
+        void SetUniform4UInt(const std::string& name, const unsigned int x, const unsigned int y, const unsigned int z, const unsigned int w) const;
 
-        void SetUniform1Float(std::string name, float val);
-        void SetUniformVec2(std::string name, Vec2 val);
-        void SetUniform3Float(std::string name, float x, float y, float z);
-        void SetUniform4Float(std::string name, float x, float y, float z, float w);
+        void SetUniform1Float(const std::string& , const float val) const;
+        void SetUniformVec2(const std::string& name, const Vec2 val) const; // aka SetUniform2Float()
+        void SetUniform3Float(const std::string&, const float x, const float y, const float z) const;
+        void SetUniform4Float(const std::string&, const float x, const float y, const float z, const float w) const;
 
-        unsigned int GetID();
+        unsigned int GetID() const;
     };
 
     // Vertex abstraction
@@ -395,7 +395,7 @@ namespace LibGui
     {
         unsigned char R, G, B, A = 0;
 
-        Color ToColor();
+        Color ToColor() const;
         static Pixel FromColor(const Color& color);
     };
 
@@ -414,13 +414,13 @@ namespace LibGui
         // Resize image, then clears it with Clear(fillColor).
         void Resize(Vec2i newSize, Color fillColor = Color::Black);
         // [internal]
-        void SetDataRaw(unsigned char* Data, Vec2i Size);
+        void SetDataRaw(const unsigned char* Data, const Vec2i Size);
 
         Image();
         Image(const std::string& path);
         Image(Vec2i Size, Color color = Color::Black);
         // Used to create text characters
-        Image(unsigned char* Data, Vec2i Size);
+        Image(const unsigned char* Data, const Vec2i Size);
 
         // Returns reference to pixel at 'pos'
         Pixel& GetPixel(Vec2i pos);
@@ -448,13 +448,13 @@ namespace LibGui
         void MergeCount(Direction_ side, int count, Color color);
 
         // save as .png at 'path'
-        bool SavePNG(const std::string& path);
+        bool SavePNG(const std::string& path) const;
         // save as .jpg at 'path', quality in % (1 is worst, 100 is best)
-        bool SaveJPG(const std::string& path, int quality);
+        bool SaveJPG(const std::string& path, int quality) const;
         // save as .tga at 'path'
-        bool SaveTGA(const std::string& path);
+        bool SaveTGA(const std::string& path) const;
         // save as .bmp at 'path'
-        bool SaveBMP(const std::string& path);
+        bool SaveBMP(const std::string& path) const;
 
         // Returns pointer to first pixel of image, useful for loading textures and saving.
         unsigned char* GetData();
@@ -482,9 +482,9 @@ namespace LibGui
         Texture(Image& source, bool smooth = true, unsigned int TextureSlot = 0, bool clamp = false);
         Texture(const std::string& path, bool smooth = true, unsigned int TextureSlot = 0, bool clamp = false);
 
-        void Bind();
-        void Unbind();
-        unsigned int GetID();
+        void Bind() const;
+        void Unbind() const;
+        unsigned int GetID() const;
     };
 
     extern ::GLFWwindow* MainWindow;
@@ -531,7 +531,7 @@ namespace LibGui
         std::map<int, KeyStatus> tracked_keys;
     public:
         KeyTracker();
-        KeyTracker(GLFWwindow* window);
+        KeyTracker(GLFWwindow* parent);
 
         void Update();
 
@@ -540,9 +540,9 @@ namespace LibGui
         void Track(FunctionalKey_ key, bool update = true);
         void Track(const std::vector<int>& keys);
 
-        const KeyStatus operator[] (int key);
-        const KeyStatus operator[] (char key);
-        const KeyStatus operator[] (FunctionalKey_ key);
+        KeyStatus operator[] (int key);
+        KeyStatus operator[] (char key);
+        KeyStatus operator[] (FunctionalKey_ key);
     };
 
     class Window
@@ -581,24 +581,24 @@ namespace LibGui
 
         // Input functions
         // Returns true if specified key is being pressed, false otherwise
-        const bool GetKeyPressed(int key);
+        bool GetKeyPressed(int key) const;
         // Returns true if specified printable key is being pressed, false otherwise
-        const bool GetKeyPressed(char key);
+        bool GetKeyPressed(char key) const;
         // Returns true if specified functional key is being pressed, false otherwise
-        const bool GetKeyPressed(FunctionalKey_ key);
+        bool GetKeyPressed(FunctionalKey_ key) const;
 
         // call before render
         void Draw();
         // call after render
-        void PushDraw();
+        void PushDraw() const;
 
         bool ShouldClose();
         void Close();
 
         // Just change window 'InitFlags' from constructor parameters to new values of 'flags'
-        void Reflag(int flags);
+        void Reflag(const int flags);
         // Set window icon to Image 'img'; 'clamp' the icon must be square, so should cut or squeeze 'img' to fit.
-        void SetIcon(Image img, bool clamp = true);
+        void SetIcon(Image img, bool clamp = true) const;
 
         /* Returns screenshot of last render, so you must do:
            window.Draw();
@@ -606,9 +606,9 @@ namespace LibGui
            LibGui::Image img = window.Screenshot();
            window.PushDraw();
          */
-        Image Screenshot(bool transparent = false);
+        Image Screenshot(const bool transparent = false) const;
 
-        void Bind();
+        void Bind() const;
     };
     extern Window* DefaultWindow;
 
@@ -618,7 +618,7 @@ namespace LibGui
         // window the object is bound to
         Window& context;
 
-        bool CompareMouseToThis(Vec2 pos, Vec2 scale, float direction);
+        bool CompareMouseToThis(const Vec2 pos, const Vec2 scale, const float direction) const;
     public:
         RectangleInput(Window& window) :context(window) {}
         virtual ~RectangleInput();
@@ -628,8 +628,19 @@ namespace LibGui
         bool Rect_OnMouseDrag(Vec2 anchor = Vec2{ 0.5f, 0.5f });
         bool Rect_OnMouseRelease(Vec2 anchor = Vec2{ 0.5f, 0.5f });
 
-        Window& GetContext();
+        Window& GetContext() const;
     };
+
+    namespace Shapes
+    {
+        typedef std::pair<std::vector<Vertex>, std::vector<unsigned int>> Shape;
+
+        Shape Rectangle(const Vec2 anchor = {0.5f, 0.5f});
+        Shape Polygon(std::vector<Vertex>& vertices);
+        Shape RegularPolygon(const int verticesCount);
+        Shape LineStrip(const std::vector<Vec2>& points);
+        Shape LineStrip(std::vector<Vertex> points);
+    }
 
     class Object: public RectangleInput
     {
@@ -638,11 +649,8 @@ namespace LibGui
 
         unsigned int indicesCount = 0;
 
-        // 'Custom' type constructor
-        void Construct(const std::vector<Vertex>& Vertices, const std::vector<unsigned int>& Indices);
-
         // Send necessary data to GPU
-        void SetupUniforms();
+        void SetupUniforms() const;
     public:
         Vec2 pos{ 0, 0 }; // in case of panel, it's pos1
         Vec2 scale{ 1, 1 }; // in case of panel, it's pos2
@@ -656,26 +664,29 @@ namespace LibGui
 
         Shader& shader;
         Texture* texture = nullptr;
-        
-        // constructors
-        void InitAsCustomPolygon(const std::vector<Vertex>& Vertices);
-        void InitAsCustom(const std::vector<Vertex>& Vertices, const std::vector<unsigned int>& Indices);
-        void InitAsRectangle(Vec2 position, Vec2 size, Color Color, Vec2 anchor = Vec2{ 0.5f, 0.5f });
-        void InitAsRectangle(Vec2 position, Vec2 size, Texture& tex, Vec2 anchor = Vec2{ 0.5f, 0.5f });
-        void InitAsRegularPolygon(Vec2 position, int verticesCount, int radius, Color Color);
-        void InitAsLineStrip(const std::vector<Vertex>& points);
-        void InitAsLineStrip(const std::vector<Vec2>& points, Color Color);
 
-        Object();
-        Object(Window& window);
-        Object(Shader& Shader);
-        Object(Window& window, Shader& Shader);
+        // 'Custom' type constructor
+        void Construct(const std::vector<Vertex>& Vertices, const std::vector<unsigned int>& Indices);
+
+        Object(const Vec2 position, const Vec2 scale, const Color color, const Shapes::Shape& shape, const int UniformFlags = 0);
+        Object(const Vec2 position, const Vec2 scale, Texture& texture, const Shapes::Shape& shape, const int UniformFlags = 0);
+
+        Object(const Vec2 position, const Vec2 scale, const Color color, const Shapes::Shape& shape, Window& window, const int UniformFlags = 0);
+        Object(const Vec2 position, const Vec2 scale, Texture& texture, const Shapes::Shape& shape, Window& window, const int UniformFlags = 0);
+
+        Object(const Vec2 position, const Vec2 scale, const Color color, const Shapes::Shape& shape, Shader& shader, const int UniformFlags = 0);
+        Object(const Vec2 position, const Vec2 scale, Texture& texture, const Shapes::Shape& shape, Shader& shader, const int UniformFlags = 0);
+
+        Object(const Vec2 position, const Vec2 scale, const Color color, const Shapes::Shape& shape, Window& window, Shader& shader, const int UniformFlags = 0);
+        Object(const Vec2 position, const Vec2 scale, Texture& texture, const Shapes::Shape& shape, Window& window, Shader& shader, const int UniformFlags = 0);
+
+        ~Object() override;
 
         // Render; 'custom_uniSetup' determines if SetupUniforms() should be called before render
-        void Render(bool custom_uniSetup = false);
+        void Render(bool custom_uniSetup = false) const;
 
         // Interaction
-        bool Rect_OnMouseEnter(Vec2 anchor = Vec2{ 0.5f, 0.5f }) override;
+        bool Rect_OnMouseEnter(const Vec2 anchor = Vec2{ 0.5f, 0.5f }) override;
     };
 
     class DT_TextureAtlas;
@@ -710,7 +721,7 @@ namespace LibGui
         DynamicText(DT_TextureAtlas& font, Vec2i position, Color text_color = Color::White, Color background_color = Color::Transparent);
         DynamicText(Window& window, DT_TextureAtlas& font, Vec2i position, Color text_color = Color::White, Color background_color = Color::Transparent);
 
-        float RenderChar(char character, Vec2 char_pos);
+        float RenderChar(char character, Vec2 char_pos) const;
         void Render();
         // if 'text' changed -> update 'textFieldSize' value
         void UpdateTextFieldSize();
@@ -721,7 +732,7 @@ namespace LibGui
 
         // Interaction - returns index of character mouse cursor is on; returns -1 if cursor is outside of text field
         int GetTouchedCharIndex();
-        Vec2 GetPositionOnIndex(int character_index, bool left_side = true);
+        Vec2 GetPositionOnIndex(int character_index, bool left_side = true) const;
     };
     struct DT_Character {
         Texture texture;
@@ -739,7 +750,7 @@ namespace LibGui
         DT_Character GetChar(char character);
         Vec2i GetCharSize(char character);
 
-        friend float DynamicText::RenderChar(char character, Vec2 char_pos);
+        friend float DynamicText::RenderChar(char character, Vec2 char_pos) const;
     };
 
     class TextInput: public RectangleInput
@@ -785,8 +796,8 @@ namespace LibGui
     public:
         std::vector<float>* data_source = nullptr;
 
-        float scale = 1;
         Vec2 position{ 250, 250 };
+        float scale = 1;
         // center of the object
         Vec2 anchor{ 0, 0 };
         Vec2 desired_size{ 150, 150 };
@@ -797,12 +808,12 @@ namespace LibGui
         Color lineColor = Color::White;
         Color textColor = Color::White;
         Color infoLineColor = { 1.0f, 1.0f, 1.0f, 0.5f };
-        Color backgroundColor = Color::Black;
+        Color backgroundColor = {0.1f, 0.1f, 0.1f};
 
         bool anyText = true;
         float fontSize = 0.2f;
         int textLeftOffset = 5;
-        float infoLineYDelta = 0;
+        float infoLineYDelta = 5;
 
         Graph(Vec2 pos, Vec2 desSize, std::vector<float>* data_source, DT_TextureAtlas& font);
         Graph(Window& window, Vec2 pos, Vec2 desSize, std::vector<float>* data_source, DT_TextureAtlas& font);
@@ -818,7 +829,7 @@ namespace LibGui
     /* Initialization of the library, use at start as following
     * LibGui::Window myMainWindow(LibGui::Init(), "name of my cool window", { width, height }); */
     GLFWwindow* Init();
-    // Handles non-critical stuff (for example Framerate), is called from MainWindow .Draw() function, but if you want to freeze main window, you have to call this manually.
+    // Handles non-critical stuff (for example Frame rate), is called from MainWindow .Draw() function, but if you want to freeze main window, you have to call this manually.
     void ManualUpdate();
     void Terminate();
 
