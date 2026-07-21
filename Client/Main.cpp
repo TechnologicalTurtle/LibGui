@@ -11,16 +11,14 @@ int main()
 
 
    DT_TextureAtlas roboto("/usr/share/fonts/truetype/roboto/unhinted/RobotoTTF/Roboto-Regular.ttf");
-
-   std::vector<float> data = {0, 1, 1, 2, 3, 5, 8, 13, 21, 34};
-
-   Graph mygraph({100, 400}, {300, 300}, &data, roboto);
+   DynamicText text(roboto, {100, 100});
+   text.text = MyWindow.GetClipboard();
 
    while (!MyWindow.ShouldClose())
    {
       MyWindow.Draw();
 
-      mygraph.Render();
+      text.Render();
 
       MyWindow.PushDraw();
    }

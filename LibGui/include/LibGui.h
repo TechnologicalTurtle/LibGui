@@ -615,6 +615,8 @@ namespace LibGui
         void Reflag(const int flags);
         // Set window icon to Image 'img'; 'clamp' the icon must be square, so should cut or squeeze 'img' to fit.
         void SetIcon(Image img, bool clamp = true) const;
+        // sets windows title to 'name'
+        void SetWindowsName(const std::string& name) const;
 
         /* Returns screenshot of last render, so you must do:
            window.Draw();

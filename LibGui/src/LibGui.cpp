@@ -1150,6 +1150,10 @@ namespace LibGui {
 		i.pixels = img.GetData();
 		glfwSetWindowIcon(window, 1, &i);
 	}
+	void Window::SetWindowsName(const std::string& name) const
+	{
+		glfwSetWindowTitle(window, name.c_str());
+	}
 
 	Image Window::Screenshot(const bool transparent) const
 	{
