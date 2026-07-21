@@ -917,11 +917,16 @@ namespace LibGui {
 	    // ignore non-significant error/warning codes
 	    if(id == 131169 || id == 131185 || id == 131218 || id == 131204) return;
 
-		const std::string out =	"(" + std::to_string(id) + ") OpenGL " + gl_error_type_table[type] + " from " + gl_error_source_table[source] + " with " + gl_error_severity_table[severity] + " severity:\n" +
+		const std::string out =	"(" + std::to_string(id) + ") (OpenGL " + gl_error_type_table[type] + ") from " + gl_error_source_table[source] + " with " + gl_error_severity_table[severity] + " severity:\n" +
 								std::string(message);
 
 		Debug::Error(out);
 	}
+	static void glfw_error_callback(int error_code, const char* description)
+	{
+		Debug::Error("(GLFW error)" + std::string(description) + "("+std::to_string(error_code)+")");
+	}
+
 	static bool gl_debug_build = false;
 
 	static std::map<GLFWwindow*, Window*> window_pointer_map;
@@ -996,6 +1001,15 @@ namespace LibGui {
 	bool Window::GetKeyPressed(const FunctionalKey_ key) const
 	{
 		return GetKeyPressed(static_cast<int>(key));
+	}
+
+	std::string Window::GetClipboard() const
+	{
+		return glfwGetClipboardString(window);
+	}
+    void Window::SetClipboard(const std::string& text) const
+	{
+		glfwSetClipboardString(window, text.c_str());
 	}
 
 	static double lastTick;
@@ -1167,6 +1181,11 @@ namespace LibGui {
 			return;
 		}
 		glfwMakeContextCurrent(window);
+	}
+
+	GLFWwindow* Window::GetID() const
+	{
+		return window;
 	}
 
 	//------------------<RECTANGLE INPUT FUNCTIONS>-------
@@ -1429,6 +1448,11 @@ namespace LibGui {
 		// pos if anchor was on default (0.5, 0.5)
 		Vec2 r_pos{ pos.x - (anchor.x - 0.5f) * scale.x, pos.y - (anchor.y - 0.5f) * scale.y };
 		return CompareMouseToThis(r_pos, scale, direction);
+	}
+
+	void Object::GetBuffers(unsigned int& vao, unsigned int& vbo, unsigned int& ebo) const
+	{
+		vao = VAO; vbo = VBO; ebo = EBO;
 	}
 
 	//------------------<DYNAMIC TEXT>------------------
@@ -1908,6 +1932,7 @@ namespace LibGui {
 	{
 		gl_debug_build = debug_build;
 
+		glfwSetErrorCallback(glfw_error_callback);
 		// Initialize glfw
 		if (!glfwInit())
 			Debug::FatalError("GLFW failed to initialize!");
@@ -2042,11 +2067,13 @@ namespace LibGui {
 	{
 		bool LogRepeated = false;
 		bool ErrorCrash = false;
-		// TOODO: log filtering
+		DebugLevel_ LogFilter = DebugLevel_None;
 
 		static std::string lastLog = "";
 		void Happy(const std::string& message)
 		{
+			if (LogFilter >= DebugLevel_Happy) return;
+
 			if ("HAPPY$" + message == lastLog && !LogRepeated)
 				return;
 			lastLog = "HAPPY$" + message;
@@ -2055,6 +2082,8 @@ namespace LibGui {
 		}
 		void Log(const std::string& message)
 		{
+			if (LogFilter >= DebugLevel_Log) return;
+
 			if ("LOG$" + message == lastLog && !LogRepeated)
 				return;
 			lastLog = "LOG$" + message;
@@ -2063,20 +2092,23 @@ namespace LibGui {
 		}
 		void Warn(const std::string& message)
 		{
+			if (LogFilter >= DebugLevel_Warning) return;
+
 			if ("WARN$" + message == lastLog && !LogRepeated)
 				return;
 			lastLog = "WARN$" + message;
 
 			std::cout << "\033[33m[WARNING]:\033[0m" << message << "\n";
 		}
-		void Error(const std::string& message)
-		{
-			if ("ERROR$" + message == lastLog && !LogRepeated)
-				return;
-			lastLog = "ERROR$" + message;
+		void Error(const std::string& message) {
+			if (LogFilter < DebugLevel_Error)
+			{
+				if ("ERROR$" + message == lastLog && !LogRepeated)
+					return;
+				lastLog = "ERROR$" + message;
 
-			std::cout << "\033[31m[ERROR]:\033[0m  " << message << "\n";
-
+				std::cout << "\033[31m[ERROR]:\033[0m  " << message << "\n";
+			}
 			if (!ErrorCrash)
 				return;
 

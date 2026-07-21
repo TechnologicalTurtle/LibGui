@@ -328,6 +328,19 @@ namespace LibGui
         UniformFlag_RenderAsLine      = 0b10000
     };
 
+    namespace Debug
+    {
+        enum DebugLevel_
+        {
+            DebugLevel_None,
+            DebugLevel_Log,
+            DebugLevel_Warning,
+            DebugLevel_Happy,
+            DebugLevel_Error,
+            DebugLevel_Fatal
+        };
+    }
+
     class TextFile
     {
     private:
@@ -587,6 +600,9 @@ namespace LibGui
         // Returns true if specified functional key is being pressed, false otherwise
         bool GetKeyPressed(FunctionalKey_ key) const;
 
+        std::string GetClipboard() const;
+        void SetClipboard(const std::string& text) const;
+
         // call before render
         void Draw();
         // call after render
@@ -609,6 +625,7 @@ namespace LibGui
         Image Screenshot(const bool transparent = false) const;
 
         void Bind() const;
+        GLFWwindow* GetID() const;
     };
     extern Window* DefaultWindow;
 
@@ -687,6 +704,7 @@ namespace LibGui
 
         // Interaction
         bool Rect_OnMouseEnter(const Vec2 anchor = Vec2{ 0.5f, 0.5f }) override;
+        void GetBuffers(unsigned int& vao, unsigned int& vbo, unsigned int& ebo) const;
     };
 
     class DT_TextureAtlas;
@@ -857,6 +875,8 @@ namespace LibGui
         extern bool LogRepeated;
         // Crash on Error()
         extern bool ErrorCrash;
+        // filter anything equal or below
+        extern DebugLevel_ LogFilter;
 
         void Happy(const std::string& message);
         void Log(const std::string& message);
