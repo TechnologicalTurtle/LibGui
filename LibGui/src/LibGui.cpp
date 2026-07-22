@@ -165,6 +165,45 @@ const Color Color::Purple(0.78f, 0.0f, 1.0f);
 const Color Color::Yellow(1.0f, 1.0f, 0.0f);
 const Color Color::Brown(0.23f, 0.1f, 0.0f);
 
+Color Color::FromHEX(std::string hex)
+{
+	if (hex[0] == '#' || hex[0] == '$') hex.erase(hex.begin());
+
+	if (hex.size() != 6 && hex.size() != 8) {
+		LibGui::Debug::Error("Color::FromHEX(), hex code provided isn't long 6/8 characters!");
+		return Color{1, 1, 1};
+	}
+
+	// check if correct
+	try
+	{
+		std::stoull(hex, nullptr, 16);
+	}
+	catch (std::invalid_argument)
+	{
+		LibGui::Debug::Error("Color::FromHEX(): invalid hex code! (#" + hex + ")");
+		std::cout << std::endl;
+		return {1, 1, 1};
+	}
+
+	// string to color channel
+	auto quick_parse = [hex](const int i) {
+		return static_cast<float>(
+			stoi(
+				hex.substr(i, 2),
+				nullptr,
+				16
+			)
+		)/255;
+	};
+	return {
+		quick_parse(0),
+		quick_parse(2),
+		quick_parse(4),
+		(hex.size()==8?quick_parse(6):1.0f)
+	};
+}
+
 namespace LibGui {
 	bool DebugRender = false;
 
@@ -907,15 +946,15 @@ namespace LibGui {
 		{GL_DEBUG_SEVERITY_NOTIFICATION, "Notification"}
 	};
 	static void APIENTRY glDebugOutput(GLenum source,
-                            GLenum type,
-                            unsigned int id,
-                            GLenum severity,
-                            GLsizei length,
-                            const char *message,
-                            const void *userParam)
+							GLenum type,
+							unsigned int id,
+							GLenum severity,
+							GLsizei length,
+							const char *message,
+							const void *userParam)
 	{
-	    // ignore non-significant error/warning codes
-	    if(id == 131169 || id == 131185 || id == 131218 || id == 131204) return;
+		// ignore non-significant error/warning codes
+		if(id == 131169 || id == 131185 || id == 131218 || id == 131204) return;
 
 		const std::string out =	"(" + std::to_string(id) + ") (OpenGL " + gl_error_type_table[type] + ") from " + gl_error_source_table[source] + " with " + gl_error_severity_table[severity] + " severity:\n" +
 								std::string(message);
@@ -1007,7 +1046,7 @@ namespace LibGui {
 	{
 		return glfwGetClipboardString(window);
 	}
-    void Window::SetClipboard(const std::string& text) const
+	void Window::SetClipboard(const std::string& text) const
 	{
 		glfwSetClipboardString(window, text.c_str());
 	}
@@ -1465,6 +1504,7 @@ namespace LibGui {
 		:RectangleInput(*DefaultWindow),
 		core(static_cast<Vec2>(position), { 0, 0 }, Color::White, Shapes::Rectangle({1, 1})),
 		background(static_cast<Vec2>(position), { 0, 0 }, Color::Transparent, Shapes::Rectangle({ 0, 0 })),
+		highlight({0, 0}, {10, 10}, Color::Transparent, Shapes::Rectangle({0, 1})),
 		atlas(&font),
 		pos(position),
 		textColor(text_color),
@@ -1474,17 +1514,21 @@ namespace LibGui {
 		:RectangleInput(window),
 		core(static_cast<Vec2>(position), { 0, 0 }, Color::White, Shapes::Rectangle({1, 1}), window),
 		background(static_cast<Vec2>(position), { 0, 0 }, Color::Transparent, Shapes::Rectangle({ 0, 0 }), window),
+		highlight({0, 0}, {10, 10}, Color::Transparent, Shapes::Rectangle({0, 1})),
 		atlas(&font),
 		pos(position),
 		textColor(text_color),
 		backColor(background_color){
 	}
 
-	void DynamicText::UpdateTextFieldSize()
+	void DynamicText::UpdateTextFieldSize(std::vector<DT_TextureAtlas*> fonts)
 	{
+		std::vector<DT_TextureAtlas*> font_stack = {atlas};
+
 		Vec2i size{ 0.0f, atlas->maxHeight*fontSize }; float newX = 0;
-		for (char c : text)
+		for (int i = 0; i < text.size(); ++i)
 		{
+			const char c = text[i];
 			if (c == ' ')
 				newX += 20.0f*fontSize;
 			else if (c == '\n')
@@ -1493,9 +1537,51 @@ namespace LibGui {
 				size.y += atlas->maxHeight*fontSize;
 				newX = 0;
 			}
+			else if (c == '\033')
+			{
+				// color
+				if (text[i+1] == 'c' && text[i+2] == 'e')
+					i += 2;
+				else if (text[i+1] == 'c' && text[i+2] == '#')
+					i += 8;
+				else if (text[i+1] == 'c' && text[i+2] == '$')
+					i += 10;
+
+				// highlight
+				if (text[i+1] == 'h' && text[i+2] == 'e')
+					i += 2;
+				else if (text[i+1] == 'h' && text[i+2] == '#')
+					i += 8;
+				else if (text[i+1] == 'h' && text[i+2] == '$')
+					i += 10;
+
+				else if (text[i+1] == 'f')
+				{
+					if (text[i+2] != 'e')
+					{
+						if (text[i+2] < 48 || text[i+2] > 57 || text[i+2]-48 < 0 || text[i+2]-48 >= fonts.size())
+						{
+							Debug::Error("DynamicText::UpdateTextFieldSize(): '\\033f" + std::to_string(text[i+2]-48) + "' invalid font formatting parameter");
+							continue;
+						}
+						font_stack.push_back(fonts[text[i+2]-48]);
+						i += 2;
+					}
+					else
+					{
+						if (font_stack.size() <= 1)
+						{
+							Debug::Error("DynamicText::UpdateTextFieldSize(): \\033fe operator without start.");
+							continue;
+						}
+						font_stack.pop_back();
+						i += 2;
+					}
+				}
+			}
 			else
 			{
-				newX += atlas->GetChar(c).advance * fontSize;
+				newX += font_stack[font_stack.size()-1]->GetChar(c).advance * fontSize;
 			}
 		}
 		size.x = std::max(static_cast<float>(size.x), newX);
@@ -1503,10 +1589,18 @@ namespace LibGui {
 		textFieldSize = size;
 	}
 
-	float DynamicText::RenderChar(char character, Vec2 char_pos) const
+	void DynamicText::RenderHighlight(Vec2 position, Vec2 scale, Color color)
+	{
+		highlight.pos = position;
+		highlight.scale = scale;
+		highlight.color = color;
+
+		highlight.Render();
+	}
+	float DynamicText::RenderChar(char character, Vec2 char_pos, Color clr, DT_TextureAtlas& font, const Color char_highlight)
 	{
 		dtS.Bind();
-		Texture& texture = atlas->atlas[character].texture;
+		Texture& texture = font.atlas[character].texture;
 
 		glUniform2f(
 			glGetUniformLocation(dtS.GetID(), "u_ParentPos"),
@@ -1515,8 +1609,8 @@ namespace LibGui {
 		);
 		glUniform2f(
 			glGetUniformLocation(dtS.GetID(), "u_CharPos"),
-			GetCoord(char_pos.x+atlas->atlas[character].bearing.x*fontSize, false, context.size.x),
-			GetCoord(char_pos.y-(texture.size.y-atlas->atlas[character].bearing.y)*fontSize, false, context.size.y)
+			GetCoord(char_pos.x+font.atlas[character].bearing.x*fontSize, false, context.size.x),
+			GetCoord(char_pos.y-(texture.size.y-font.atlas[character].bearing.y)*fontSize, false, context.size.y)
 		);
 
 		glUniform2f(
@@ -1527,10 +1621,10 @@ namespace LibGui {
 
 		glUniform4f(
 			glGetUniformLocation(dtS.GetID(), "u_TextColor"),
-			textColor.r,
-			textColor.g,
-			textColor.b,
-			textColor.a
+			clr.r,
+			clr.g,
+			clr.b,
+			clr.a
 		);
 		glUniform4f(
 			glGetUniformLocation(dtS.GetID(), "u_BackColor"),
@@ -1555,12 +1649,18 @@ namespace LibGui {
 		texture.Bind();
 		core.Render(true);
 
-		return atlas->atlas[character].advance*fontSize;
+		if (char_highlight == Color::Transparent)  return font.atlas[character].advance*fontSize;
+
+		RenderHighlight(pos + Vec2{char_pos.x, -char_pos.y + static_cast<float>(textYOffset)+font.maxHeight*0.1f},
+		Vec2{font.atlas[character].advance*fontSize, static_cast<float>(font.maxHeight)},
+		char_highlight);
+
+		return font.atlas[character].advance*fontSize;
 	}
 
-	void DynamicText::UpdateTFSandBackground()
+	void DynamicText::UpdateTFSandBackground(std::vector<DT_TextureAtlas*> fonts)
 	{
-		UpdateTextFieldSize();
+		UpdateTextFieldSize(fonts);
 
 		const Vec2 ns{ static_cast<Vec2>(textFieldSize) + backgroundAddSize };
 
@@ -1581,33 +1681,127 @@ namespace LibGui {
 		background.pos = pos + backgroundAddSize * Vec2{-0.5f, 0.5f};
 	}
 
-	void DynamicText::Render()
+	void DynamicText::Render(std::vector<DT_TextureAtlas*> fonts, Vec2 selection)
 	{
 		background.color = backColor;
 
 		glPolygonMode(GL_FRONT_AND_BACK, DebugRender ? GL_LINE : GL_FILL);
 
-		UpdateTFSandBackground();
+		UpdateTFSandBackground(fonts);
 		charBackColor = backColor;
 		background.Render();
 
+		std::vector<Color> color_stack = {textColor};
+		std::vector<Color> high_stack = {Color::Transparent};
+		std::vector<DT_TextureAtlas*> font_stack = {atlas};
+
+		int srcI = 0;
 		Vec2i char_pos{0, 0};
-		for (char c : text)
+		for (int i = 0; i < text.size(); i++)
 		{
-			if (c == ' ')
+			if (const char c = text[i]; c == ' ')
+			{
+				RenderHighlight(pos + Vec2{static_cast<float>(char_pos.x), -char_pos.y + static_cast<float>(textYOffset)+font_stack[font_stack.size()-1]->maxHeight*0.1f},
+				Vec2{20.0f, static_cast<float>(font_stack[font_stack.size()-1]->maxHeight)},
+				(srcI < selection.y && srcI >= selection.x)?
+					selectionColor:high_stack[high_stack.size()-1]);
 				char_pos.x += 20.0f*fontSize;
+				srcI++;
+			}
 			else if (c == '\n')
 			{
+				RenderHighlight(pos + Vec2{static_cast<float>(char_pos.x), -char_pos.y + static_cast<float>(textYOffset)+font_stack[font_stack.size()-1]->maxHeight*0.1f},
+				Vec2{8.0f, static_cast<float>(font_stack[font_stack.size()-1]->maxHeight)},
+				(srcI < selection.y && srcI >= selection.x)?
+					selectionColor:high_stack[high_stack.size()-1]);
 				char_pos = Vec2i{ 0.0f, char_pos.y - atlas->maxHeight*fontSize };
+				srcI++;
+			}
+			else if (c == '\033')
+			{
+				if (text[i+1] == 'c')
+				{
+					if (text[i+2] == '#')
+					{
+						color_stack.push_back(Color::FromHEX(text.substr(i+2, 7)));
+						i += 8;
+					}
+					if (text[i+2] == '$')
+					{
+						color_stack.push_back(Color::FromHEX(text.substr(i+2, 9)));
+						i += 10;
+					}
+					else if (text[i+2] == 'e')
+					{
+						if (color_stack.size() <= 1)
+						{
+							Debug::Error("DynamicText::Render(): \\033ce operator without start.");
+							continue;
+						}
+						color_stack.pop_back();
+						i += 2;
+					}
+				}
+				else if (text[i+1] == 'h')
+				{
+					if (text[i+2] == '#')
+					{
+						high_stack.push_back(Color::FromHEX(text.substr(i+2, 7)));
+						i += 8;
+					}
+					if (text[i+2] == '$')
+					{
+						high_stack.push_back(Color::FromHEX(text.substr(i+2, 9)));
+						i += 10;
+					}
+					else if (text[i+2] == 'e')
+					{
+						if (high_stack.size() <= 1)
+						{
+							Debug::Error("DynamicText::Render(): \\033he operator without start.");
+							continue;
+						}
+						high_stack.pop_back();
+						i += 2;
+					}
+				}
+				else if (text[i+1] == 'f')
+				{
+					if (text[i+2] != 'e')
+					{
+						if (text[i+2] < 48 || text[i+2] > 57 || text[i+2]-48 < 0 || text[i+2]-48 >= fonts.size())
+						{
+							Debug::Error("DynamicText::Render(): '\\033f" + std::to_string(text[i+2]-48) + "' invalid font formatting parameter");
+							continue;
+						}
+						font_stack.push_back(fonts[text[i+2]-48]);
+						i += 2;
+					}
+					else
+					{
+						if (font_stack.size() <= 1)
+						{
+							Debug::Error("DynamicText::Render(): \\033fe operator without start.");
+							continue;
+						}
+						font_stack.pop_back();
+						i += 2;
+					}
+				}
 			}
 			else
-				char_pos.x += RenderChar(c, char_pos);
+			{
+				char_pos.x += RenderChar(c, char_pos, color_stack[color_stack.size()-1], *font_stack[font_stack.size()-1],
+				(srcI < selection.y && srcI >= selection.x)?
+					selectionColor:high_stack[high_stack.size()-1]);
+				srcI++;
+			}
 		}
 	}
-	
-	Vec2 DynamicText::GetFinalSize()
+
+	Vec2 DynamicText::GetFinalSize(std::vector<DT_TextureAtlas*> fonts)
 	{
-		UpdateTFSandBackground();
+		UpdateTFSandBackground(fonts);
 		return background.scale;
 	}
 
@@ -1616,10 +1810,80 @@ namespace LibGui {
 		return background.Rect_OnMouseEnter({0, 0});
 	}
 
-	int DynamicText::GetTouchedCharIndex()
+	int DynamicText::SourceIndexToRichTextIndex(int in) const
 	{
-		UpdateTFSandBackground();
-		//if (!background.Rect_OnMouseEnter({0, 0})) return -1;
+		int srcI = 0;
+		int richI = 0;
+		while (srcI < in) {
+			if (text[richI] == '\033')
+			{
+				// color
+				if (text[richI+1] == 'c' && text[richI+2] == 'e')
+					richI += 2;
+				else if (text[richI+1] == 'c' && text[richI+2] == '#')
+					richI += 8;
+				else if (text[richI+1] == 'c' && text[richI+2] == '$')
+					richI += 10;
+
+				// highlight
+				if (text[richI+1] == 'h' && text[richI+2] == 'e')
+					richI += 2;
+				else if (text[richI+1] == 'h' && text[richI+2] == '#')
+					richI += 8;
+				else if (text[richI+1] == 'h' && text[richI+2] == '$')
+					richI += 10;
+
+				// any font case
+				else if (text[richI+1] == 'f')
+					richI += 2;
+			}
+			else
+				srcI++;
+			richI++;
+		}
+
+		return richI;
+	}
+	int DynamicText::RichTextIndexToSourceIndex(int in) const
+	{
+		int srcI = 0;
+		int richI = 0;
+
+		while (richI < in)
+		{
+			if (text[richI] == '\033')
+			{
+				// color
+				if (text[richI+1] == 'c' && text[richI+2] == 'e')
+					richI += 2;
+				else if (text[richI+1] == 'c' && text[richI+2] == '#')
+					richI += 8;
+				else if (text[richI+1] == 'c' && text[richI+2] == '$')
+					richI += 10;
+
+				// highlight
+				if (text[richI+1] == 'h' && text[richI+2] == 'e')
+					richI += 2;
+				else if (text[richI+1] == 'h' && text[richI+2] == '#')
+					richI += 8;
+				else if (text[richI+1] == 'h' && text[richI+2] == '$')
+					richI += 10;
+
+				// any font case
+				else if (text[richI+1] == 'f')
+					richI += 2;
+			}
+			else
+				srcI++;
+			richI++;
+		}
+
+		return srcI;
+	}
+
+	int DynamicText::GetTouchedCharIndex(std::vector<DT_TextureAtlas*> fonts)
+	{
+		UpdateTFSandBackground(fonts);
 		Vec2i char_pos{0, 0};
 		int desiredLine = -std::floor((pos.y - context.cursor.position.y) / (atlas->maxHeight * fontSize)) - 1;
 		int i = 0;
@@ -1628,6 +1892,8 @@ namespace LibGui {
 			if (text[i] == '\n') desiredLine--;
 		}
 
+		std::vector<DT_TextureAtlas*> font_stack = {atlas};
+
 		// 99999 is just a very high number
 		float best = 99999; int index = i;
 		for (; i < text.size() && text[i] != '\n'; ++i)
@@ -1635,10 +1901,50 @@ namespace LibGui {
 			char c = text[i];
 			if (c == ' ')
 				char_pos.x += 20.0f*fontSize;
-			else
-				char_pos.x += atlas->GetChar(c).advance*fontSize;
+			else if (c == '\033')
+			{
+				if (text[i+1] == 'c' && text[i+2] == '#')
+					i += 8;
+				else if (text[i+1] == 'c' && text[i+2] == '$')
+					i += 10;
+				else if (text[i+1] == 'c' && text[i+2] == 'e')
+					i += 2;
 
-			float d = std::abs(pos.x + char_pos.x - atlas->GetCharSize(c).x / 2 - context.cursor.position.x);
+				if (text[i+1] == 'h' && text[i+2] == '#')
+					i += 8;
+				else if (text[i+1] == 'h' && text[i+2] == '$')
+					i += 10;
+				else if (text[i+1] == 'h' && text[i+2] == 'e')
+					i += 2;
+
+				else if (text[i+1] == 'f')
+				{
+					if (text[i+2] != 'e')
+					{
+						if (text[i+2] < 48 || text[i+2] > 57 || text[i+2]-48 < 0 || text[i+2]-48 >= fonts.size())
+						{
+							Debug::Error("DynamicText::GetTouchedCharIndex(): '\\033f" + std::to_string(text[i+2]-48) + "' invalid font formatting parameter");
+							continue;
+						}
+						font_stack.push_back(fonts[text[i+2]-48]);
+						i += 2;
+					}
+					else
+					{
+						if (font_stack.size() <= 1)
+						{
+							Debug::Error("DynamicText::GetTouchedCharIndex(): \\033fe operator without start.");
+							continue;
+						}
+						font_stack.pop_back();
+						i += 2;
+					}
+				}
+			}
+			else
+				char_pos.x += font_stack[font_stack.size()-1]->GetChar(c).advance*fontSize;
+
+			const float d = std::abs(pos.x + char_pos.x - font_stack[font_stack.size()-1]->GetCharSize(c).x - context.cursor.position.x);
 			if (d < best)
 			{
 				best = d;
@@ -1646,22 +1952,66 @@ namespace LibGui {
 			}
 		}
 
-		return index;
+		return RichTextIndexToSourceIndex(index);
 	}
-	Vec2 DynamicText::GetPositionOnIndex(int character_index, bool left_side) const
+	Vec2 DynamicText::GetPositionOnIndex(int character_index, bool left_side, std::vector<DT_TextureAtlas*> fonts) const
 	{
+		character_index = SourceIndexToRichTextIndex(character_index);
+
+		std::vector<DT_TextureAtlas*> font_stack = {atlas};
+
 		Vec2i char_pos{ 0, 0 };
 		for (int i = 0; i < text.size(); ++i)
 		{
-			char c = text[i];
+			const char c = text[i];
 			if (i == character_index && left_side) return char_pos + pos;
 			if (i-1 == character_index && !left_side) return char_pos + pos;
 			if (c == ' ')
 				char_pos.x += 20.0f*fontSize;
 			else if (c == '\n')
 				char_pos = Vec2i{ 0.0f, char_pos.y + atlas->maxHeight*fontSize };
+			else if (c == '\033')
+			{
+				if (text[i+1] == 'c' && text[i+2] == '#')
+					i += 8;
+				if (text[i+1] == 'c' && text[i+2] == '$')
+					i += 10;
+				else if (text[i+1] == 'c' && text[i+2] == 'e')
+					i += 2;
+
+				if (text[i+1] == 'h' && text[i+2] == '#')
+					i += 8;
+				else if (text[i+1] == 'h' && text[i+2] == '$')
+					i += 10;
+				else if (text[i+1] == 'h' && text[i+2] == 'e')
+					i += 2;
+
+				else if (text[i+1] == 'f')
+				{
+					if (text[i+2] != 'e')
+					{
+						if (text[i+2] < 48 || text[i+2] > 57 || text[i+2]-48 < 0 || text[i+2]-48 >= fonts.size())
+						{
+							Debug::Error("DynamicText::GetPositionOnIndex(): '\\033f" + std::to_string(text[i+2]-48) + "' invalid font formatting parameter");
+							continue;
+						}
+						font_stack.push_back(fonts[text[i+2]-48]);
+						i += 2;
+					}
+					else
+					{
+						if (font_stack.size() <= 1)
+						{
+							Debug::Error("DynamicText::GetPositionOnIndex(): \\033fe operator without start.");
+							continue;
+						}
+						font_stack.pop_back();
+						i += 2;
+					}
+				}
+			}
 			else
-				char_pos.x += atlas->GetChar(c).advance*fontSize;
+				char_pos.x += font_stack[font_stack.size()-1]->GetChar(c).advance*fontSize;
 		}
 
 		return char_pos + pos;
@@ -1722,80 +2072,174 @@ namespace LibGui {
 	{
 		backColor = Color{0.1f, 0.1f, 0.1f};
 
-		window.key_tracker.Track({ 
+		window.key_tracker.Track({
+			FunctionalKey_Escape,
 			FunctionalKey_Enter,
 			FunctionalKey_Backspace,
 			FunctionalKey_Delete,
 			FunctionalKey_Up,
 			FunctionalKey_Down,
 			FunctionalKey_Right,
-			FunctionalKey_Left
-			});
+			FunctionalKey_Left,
+			FunctionalKey_Left_Control, 'X', 'C', 'V'
+		});
 	}
 
 	void TextInput::Update(bool render_afterwards)
 	{
+		auto clear_selection_cache = [this]{select_start = -1; select_end = -1; back_text_cursor_start = -1;};
 		// on click on text => activate
-		if (Rect_OnMouseClick()) 
+		if (Rect_OnMouseClick())
 		{
 			active = true;
 			// if render.GetTouchedCharIndex() returns -1, set to 0
-			cursor_pos = std::max(0, render.GetTouchedCharIndex());
+			cursor_pos = std::max(0, render.GetTouchedCharIndex(rich_text_font_list));
+			text_cursor_tick_time = 0;
+
+			if (select_start != -1 && select_end != -1)
+				clear_selection_cache();
+
+			select_start = cursor_pos;
+			back_text_cursor_start = cursor_pos;
 		}
+		else if (Rect_OnMouseDrag() && select_start != -1)
+		{
+			if (const int new_pos = render.GetTouchedCharIndex(rich_text_font_list);
+				new_pos > select_start)
+			{
+				select_end = new_pos;
+				select_start = back_text_cursor_start;
+			}
+			else
+			{
+				select_end = back_text_cursor_start;
+				select_start = new_pos;
+			}
+		}
+		else if (Rect_OnMouseRelease() && select_start == select_end)
+			clear_selection_cache();
+
 		// on click outside of text => deactivate
 		if (!Rect_OnMouseEnter() && context.cursor.left_button.clicked)
 			active = false;
 
-		if (active)
+		if (!active)
 		{
-			if (context.pressed_character != 0)
+			if (render_afterwards) Render();
+			return;
+		}
+
+		if (context.pressed_character != 0)
+		{
+			if (select_start != -1)
+			{
+				text.erase(text.begin()+select_start, text.begin()+select_end);
+				text.insert(text.begin() + select_start, context.pressed_character);
+				cursor_pos = static_cast<int>(std::clamp(select_start + 1, 0, static_cast<int>(text.size())));
+				clear_selection_cache();
+			}
+			else
 			{
 				text.insert(text.begin() + cursor_pos, context.pressed_character);
 				cursor_pos = static_cast<int>(std::clamp(cursor_pos + 1, 0, static_cast<int>(text.size())));
 			}
-			else if (context.key_tracker[FunctionalKey_Enter].clicked)
+			text_cursor_tick_time = 0;
+		}
+		else if (context.key_tracker[FunctionalKey_Enter].clicked)
+		{
+			if (select_start != -1)
+			{
+				text.erase(text.begin()+select_start, text.begin()+select_end);
+				text.insert(text.begin() + select_start, '\n');
+				cursor_pos = static_cast<int>(std::clamp(select_start + 1, 0, static_cast<int>(text.size())));
+				clear_selection_cache();
+			}
+			else
 			{
 				text.insert(text.begin() + cursor_pos, '\n');
 				cursor_pos = static_cast<int>(std::clamp(cursor_pos + 1, 0, static_cast<int>(text.size())));
 			}
-			else if (context.key_tracker[FunctionalKey_Backspace].clicked && text.length() > 0 && cursor_pos > 0)
+				text_cursor_tick_time = 0;
+		}
+		else if (context.key_tracker[FunctionalKey_Backspace].clicked && text.length() > 0 && (cursor_pos > 0||select_start != -1)) {
+			if (select_start != -1)
+			{
+				cursor_pos = select_start;
+				text.erase(text.begin() + select_start, text.begin() + select_end);
+				text_cursor_tick_time = 0;
+				clear_selection_cache();
+			}
+			else
 			{
 				cursor_pos = static_cast<int>(std::clamp(cursor_pos - 1, 0, static_cast<int>(text.size())));
 				text.erase(text.begin() + cursor_pos);
+				text_cursor_tick_time = 0;
 			}
-			else if (context.key_tracker[FunctionalKey_Delete].clicked && text.length() > 0)
+		}
+		else if (context.key_tracker[FunctionalKey_Delete].clicked && text.length() > 0) {
+			if (select_start != -1)
 			{
-				if (cursor_pos < text.size()-1)
-					text.erase(text.begin() + cursor_pos);
+				cursor_pos = select_start;
+				text.erase(text.begin() + select_start, text.begin() + select_end);
+				text_cursor_tick_time = 0;
+				clear_selection_cache();
 			}
-			else if (context.key_tracker[FunctionalKey_Up].clicked)
+			else if (cursor_pos < text.size())
 			{
-				bool firstFlag = false;
-				for (int i = cursor_pos; i >= 0; --i)
+				text.erase(text.begin() + cursor_pos);
+				text_cursor_tick_time = 0;
+			}
+		}
+		else if (context.key_tracker[FunctionalKey_Up].clicked)
+		{
+			for (;cursor_pos > 0 && text[cursor_pos] != '\n'; --cursor_pos){}
+			cursor_pos = std::clamp(cursor_pos-1, 0, static_cast<int>(text.size()));
+			for (;cursor_pos >= 0 && text[cursor_pos] != '\n'; --cursor_pos){}
+			cursor_pos++;
+			text_cursor_tick_time = 0;
+			clear_selection_cache();
+		}
+		else if (context.key_tracker[FunctionalKey_Down].clicked)
+		{
+			for (;cursor_pos < text.size() && text[cursor_pos] != '\n'; ++cursor_pos){}
+			cursor_pos = std::clamp(cursor_pos+1, 0, static_cast<int>(text.size()));
+			text_cursor_tick_time = 0;
+			clear_selection_cache();
+		}
+		else if (context.key_tracker[FunctionalKey_Right].clicked)
+		{
+			cursor_pos = static_cast<int>(std::clamp(cursor_pos + 1, 0, static_cast<int>(text.size())));
+			text_cursor_tick_time = 0;
+			clear_selection_cache();
+		}
+		else if (context.key_tracker[FunctionalKey_Left].clicked)
+		{
+			cursor_pos = static_cast<int>(std::clamp(cursor_pos - 1, 0, static_cast<int>(text.size())));
+			text_cursor_tick_time = 0;
+			clear_selection_cache();
+		}
+		else if (context.key_tracker[FunctionalKey_Left_Control].pressed)
+		{
+			if (context.key_tracker['C'].clicked && select_start != -1)
+				context.SetClipboard(text.substr(select_start, select_end-select_start));
+			else if (context.key_tracker['X'].clicked && select_start != -1)
+			{
+				context.SetClipboard(text.substr(select_start, select_end-select_start));
+				cursor_pos = select_start;
+				text.erase(text.begin() + select_start, text.begin() + select_end);
+				text_cursor_tick_time = 0;
+				clear_selection_cache();
+			}
+			else if (context.key_tracker['V'].clicked)
+			{
+				if (select_start != -1)
 				{
-					if (text[i] == '\n') {
-						if (firstFlag)  break;
-						else firstFlag = true;
-					}
-					cursor_pos = i;
+					cursor_pos = select_start;
+					text.erase(text.begin() + select_start, text.begin() + select_end);
+					text_cursor_tick_time = 0;
+					clear_selection_cache();
 				}
-			}
-			else if (context.key_tracker[FunctionalKey_Down].clicked)
-			{
-				for (int i = cursor_pos+1; i < text.size() && text[i] != '\n'; ++i)
-				{
-					cursor_pos = i;
-				}
-
-				cursor_pos = std::clamp(cursor_pos + 2, 0, static_cast<int>(text.size()));
-			}
-			else if (context.key_tracker[FunctionalKey_Right].clicked)
-			{
-				cursor_pos = static_cast<int>(std::clamp(cursor_pos + 1, 0, static_cast<int>(text.size())));
-			}
-			else if (context.key_tracker[FunctionalKey_Left].clicked)
-			{
-				cursor_pos = static_cast<int>(std::clamp(cursor_pos - 1, 0, static_cast<int>(text.size())));
+				text.insert(cursor_pos, context.GetClipboard());
 			}
 		}
 
@@ -1807,14 +2251,14 @@ namespace LibGui {
 		else							render.text = text;
 		render.pos = pos;
 		
-		render.Render();
-		if (active && static_cast<int>(std::floor(GetLibTime() / textCursorTickRate)) % 2 == 0 &&
-			cursor_pos >= 0 && cursor_pos <= text.size())
+		render.Render(rich_text_font_list, active?Vec2{select_start, select_end}:Vec2{-1, -1});
+		text_cursor_tick_time += DeltaTime;
+		if (active && static_cast<int>(std::floor(text_cursor_tick_time / textCursorTickRate)) % 2 == 0 &&
+			cursor_pos >= 0 && cursor_pos <= render.text.size())
 		{
-			textCursor.pos = render.GetPositionOnIndex(cursor_pos, true) + Vec2{ -(render.atlas->maxHeight*fontSize)/10.0f, 10.0f };
+			textCursor.pos = render.GetPositionOnIndex(cursor_pos, true, rich_text_font_list) + Vec2{ -(render.atlas->maxHeight*fontSize)/15.0f, 10.0f };
 			textCursor.scale = Vec2{5, render.atlas->maxHeight} * fontSize;
-			if (textCursor.pos.x <= (render.pos.x + render.GetFinalSize().x))
-				textCursor.Render();
+			textCursor.Render();
 		}
 	}
 

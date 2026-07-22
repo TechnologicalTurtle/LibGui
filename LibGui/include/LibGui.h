@@ -181,6 +181,8 @@ struct Color
     static const Color Purple;
     static const Color Yellow;
     static const Color Brown;
+
+    static Color FromHEX(std::string hex);
 };
 
 struct GLFWwindow;
@@ -716,11 +718,14 @@ namespace LibGui
     private:
         Object core;
         Object background;
+        Object highlight;
 
-        void UpdateTFSandBackground();
+        void UpdateTFSandBackground(std::vector<DT_TextureAtlas*> fonts = {});
         int textYOffset = 0;
 
         Color charBackColor = Color::Transparent;
+
+        void RenderHighlight(Vec2 pos, Vec2 scale, Color color);
     public:
         DT_TextureAtlas* atlas;
 
@@ -737,22 +742,26 @@ namespace LibGui
 
         Color textColor = Color::White;
         Color backColor = Color::Transparent;
+        Color selectionColor = {0.0f, 0.0f, 1.0f, 0.3f};
 
         DynamicText(DT_TextureAtlas& font, Vec2i position, Color text_color = Color::White, Color background_color = Color::Transparent);
         DynamicText(Window& window, DT_TextureAtlas& font, Vec2i position, Color text_color = Color::White, Color background_color = Color::Transparent);
 
-        float RenderChar(char character, Vec2 char_pos) const;
-        void Render();
+        int SourceIndexToRichTextIndex(int in) const;
+        int RichTextIndexToSourceIndex(int in) const;
+
+        float RenderChar(char character, Vec2 char_pos, Color clr, DT_TextureAtlas& font, const Color char_highlight = Color::Transparent);
+        void Render(std::vector<DT_TextureAtlas*> fonts = {}, Vec2 selection = {-1, -1});
         // if 'text' changed -> update 'textFieldSize' value
-        void UpdateTextFieldSize();
-        Vec2 GetFinalSize();
+        void UpdateTextFieldSize(std::vector<DT_TextureAtlas*> fonts = {});
+        Vec2 GetFinalSize(std::vector<DT_TextureAtlas*> fonts = {});
 
         // Interaction - ignore 'anchor' parameter
         bool Rect_OnMouseEnter(Vec2 anchor = Vec2{ 0.5f, 0.5f }) override;
 
         // Interaction - returns index of character mouse cursor is on; returns -1 if cursor is outside of text field
-        int GetTouchedCharIndex();
-        Vec2 GetPositionOnIndex(int character_index, bool left_side = true) const;
+        int GetTouchedCharIndex(std::vector<DT_TextureAtlas*> fonts);
+        Vec2 GetPositionOnIndex(int character_index, bool left_side = true, std::vector<DT_TextureAtlas*> fonts = {}) const;
     };
     struct DT_Character {
         Texture texture;
@@ -770,7 +779,7 @@ namespace LibGui
         DT_Character GetChar(char character);
         Vec2i GetCharSize(char character);
 
-        friend float DynamicText::RenderChar(char character, Vec2 char_pos) const;
+        friend float DynamicText::RenderChar(char character, Vec2 char_pos, Color clr, DT_TextureAtlas& font, const Color char_highlight);
     };
 
     class TextInput: public RectangleInput
@@ -778,22 +787,30 @@ namespace LibGui
     private:
         DynamicText render;
         Object textCursor;
+
+        float text_cursor_tick_time{0};
+        int back_text_cursor_start{-1};
     public:
         bool active = false;
 
         std::string text;
         std::string(*preprocessText)(const std::string&) = nullptr;
 
+        DT_TextureAtlas*& atlas = render.atlas;
+        std::vector<DT_TextureAtlas*> rich_text_font_list{};
         float& fontSize = render.fontSize;
+
         Vec2& minSize = render.minSize;
         Vec2& maxSize = render.maxSize;
         Color& textColor = render.textColor;
         Color& backColor = render.backColor;
 
         Vec2i pos;
-        int cursor_pos = 0;
+        int cursor_pos{0};
+        int select_start{-1};
+        int select_end{-1};
 
-        float textCursorTickRate = 0.5f;
+        float textCursorTickRate{0.5f};
 
         TextInput(DT_TextureAtlas& font);
         TextInput(Window& window, DT_TextureAtlas& font);
@@ -830,10 +847,10 @@ namespace LibGui
         Color infoLineColor = { 1.0f, 1.0f, 1.0f, 0.5f };
         Color backgroundColor = {0.1f, 0.1f, 0.1f};
 
-        bool anyText = true;
-        float fontSize = 0.2f;
-        int textLeftOffset = 20;
-        float infoLineYDelta = 5;
+        bool anyText{true};
+        float fontSize{0.2f};
+        int textLeftOffset{20};
+        float infoLineYDelta{5};
 
         Graph(Vec2 pos, Vec2 desSize, std::vector<float>* data_source, DT_TextureAtlas& font);
         Graph(Window& window, Vec2 pos, Vec2 desSize, std::vector<float>* data_source, DT_TextureAtlas& font);
