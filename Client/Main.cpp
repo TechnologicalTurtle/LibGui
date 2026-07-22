@@ -1,4 +1,4 @@
-#include "include/LibGui.h"
+#include "include/LibGui.hpp"
 #include <iostream>
 
 using namespace LibGui;
@@ -20,7 +20,7 @@ static std::string preprocess(const std::string& in)
 
 int main()
 {
-   Window MyWindow(Init(), "MyWindow", {500, 500});
+   Window MyWindow(Init(true), "MyWindow", {500, 500});
 
    DT_TextureAtlas roboto("/usr/share/fonts/truetype/roboto/unhinted/RobotoTTF/Roboto-Regular.ttf");
 

@@ -47,10 +47,10 @@ target_sources(LibGui
     libraries/lib/glad.c
     libraries/lib/stb_image.cpp
     libraries/lib/stb_image_write.cpp
-    src/LibGui.cpp
+        src/LibGui.cpp
   PUBLIC
     FILE_SET headers
     TYPE HEADERS
     FILES
-        include/LibGui.h
+        include/LibGui.hpp
 )

@@ -10,7 +10,7 @@
 #include "stb/stb_image.h"
 #include "stb/stb_image_write.h"
 
-#include "../include/LibGui.h"
+#include "../include/LibGui.hpp"
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
