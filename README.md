@@ -23,7 +23,7 @@ Also excuse my english, as I'm still in middle school. (almost high-school)
 - Ask people from reddit, where should I improve.
 - [Ideally not use AI at all.](#usage-of-ai)
 ### Usage of AI
-How I mentioned, I didn't want to use AI at all, because I don't want to became dependent on it (and also when I used AI in older projects, I always had to say "Look what I created! Ehh yeah I used AI, but not that much!"). So did I succeed? Kinda, in this code isn't anything from me written by AI, but I had to use it like four times, when after hours of googling, I couldn't find answer, here are two instances I remember:
+How I mentioned, I didn't want to use AI at all, because I don't want to became dependent on it. So did I succeed? Kinda, in this code isn't anything from me written by AI, but I had to use it like four times, when after hours of googling, I couldn't find answer, here are two instances I remember:
 - [this one's stupid, I know] I was coding too long and my brain got fried, then OpenGL suddenly didn't want to render anything in one specific instance. Yes, it was that all points were same, so the triangle was infinitely small.
 - Here I think, it was the right thing, as the bug occured only in C++20 and higher, and I couln't find anything about it.
   I think it was something like ambiguous operator== order problem.
