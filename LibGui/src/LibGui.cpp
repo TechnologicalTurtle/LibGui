@@ -1726,7 +1726,7 @@ namespace LibGui {
 						color_stack.push_back(Color::FromHEX(text.substr(i+2, 7)));
 						i += 8;
 					}
-					if (text[i+2] == '$')
+					else if (text[i+2] == '$')
 					{
 						color_stack.push_back(Color::FromHEX(text.substr(i+2, 9)));
 						i += 10;
@@ -1749,7 +1749,7 @@ namespace LibGui {
 						high_stack.push_back(Color::FromHEX(text.substr(i+2, 7)));
 						i += 8;
 					}
-					if (text[i+2] == '$')
+					else if (text[i+2] == '$')
 					{
 						high_stack.push_back(Color::FromHEX(text.substr(i+2, 9)));
 						i += 10;
