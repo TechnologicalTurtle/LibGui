@@ -13,6 +13,7 @@ This library was made by me, [TechnologicalTurtle](https://github.com/Technologi
 - [glad](https://github.com/Dav1dde/glad), which I know isn't technically library but loader for [OpenGL](https://www.opengl.org), but hey, it still should be credited.
 - [freetype](https://freetype.org)
 - [stb_image and stb_image_write](https://github.com/nothings/stb)
+- Also some functions are basically just calls to amazing [tinyfiledialogs](https://sourceforge.net/projects/tinyfiledialogs) library
 - And speciall thanks to [learnopengl.com](https://learnopengl.com) for amazing tutorials on OpenGL.
 ## About
 I created this project mainly to learn wotŕking with tools like git or cmake, also to try writing some 'good' code. After few months of on and off work, I finished it, but I realized that it's maybe too big to ask random redditors.  
